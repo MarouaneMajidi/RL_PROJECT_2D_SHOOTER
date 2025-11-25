@@ -1,0 +1,14 @@
+.
+├── main.py
+├── pyproject.toml
+├── README.md
+├── topdown
+│   ├── player knife.gif
+│   ├── player machinegun.gif
+│   ├── player pistol.gif
+│   ├── zombie 2.gif
+│   └── zombie.gif
+├── tree.txt
+└── uv.lock
+
+2 directories, 10 files
