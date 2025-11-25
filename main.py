@@ -20,6 +20,34 @@ ZOMBIE_SPEED = 2
 BULLET_SPEED = 10
 SPAWN_RATE = 60  # Frames between zombie spawns
 
+# Probability and Spawn Settings
+ZOMBIE_TYPE2_SPAWN_PROBABILITY = 0.2  # Probability of spawning strong zombie (zombie 2) instead of normal zombie (zombie 1)
+HEALTH_PICKUP_DROP_PROBABILITY = 0.40  # Probability of health pickup dropping when zombie is killed (0.0 to 1.0)
+MACHINEGUN_PICKUP_DROP_PROBABILITY = 0.15  # Probability of machine gun pickup dropping when zombie is killed (0.0 to 1.0)
+# Note: Pickup probabilities are checked sequentially, so health check happens first, then machine gun
+
+# Pickup Configuration
+HEALTH_PICKUP_AMOUNT = 25  # Amount of health restored when collecting health pickup
+MACHINEGUN_PICKUP_AMMO = 50  # Amount of ammo given when collecting machine gun pickup
+PICKUP_LIFETIME = 600  # Lifetime of pickups in frames (600 frames = 10 seconds at 60 FPS)
+
+# Weapon Configuration
+PISTOL_COOLDOWN = 20  # Cooldown between pistol shots (in frames)
+MACHINEGUN_COOLDOWN = 5  # Cooldown between machine gun shots (in frames)
+KNIFE_COOLDOWN = 30  # Cooldown between knife attacks (in frames)
+PISTOL_DAMAGE = 20  # Damage dealt by pistol bullets
+MACHINEGUN_DAMAGE = 10  # Damage dealt by machine gun bullets
+KNIFE_DAMAGE = 40  # Damage dealt by knife attacks
+KNIFE_RANGE = 50  # Range of knife attack
+KNIFE_LIFETIME = 5  # Lifetime of knife attack visual (in frames)
+
+# Zombie Configuration
+ZOMBIE_NORMAL_HEALTH = 30  # Health of normal zombie (zombie 1)
+ZOMBIE_NORMAL_DAMAGE = 10  # Damage dealt by normal zombie per attack
+ZOMBIE_STRONG_HEALTH = 50  # Health of strong zombie (zombie 2)
+ZOMBIE_STRONG_DAMAGE = 20  # Damage dealt by strong zombie per attack
+ZOMBIE_ATTACK_COOLDOWN = 9  # Cooldown between zombie attacks (in frames, 9 frames = 0.15 seconds at 60 FPS)
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -63,6 +91,8 @@ class Player:
         self.shoot_cooldown = 0
         self.knife_cooldown = 0
         self.speed = PLAYER_SPEED
+        self.has_machinegun = False  # Machine gun must be picked up
+        self.machinegun_ammo = 0  # Ammo for machine gun
         
     def update(self, keys, mouse_pos, mouse_buttons):
         # Calculate angle to mouse position
@@ -87,7 +117,7 @@ class Player:
         # Weapon switching
         if keys[K_1]:
             self.weapon = "pistol"
-        if keys[K_2]:
+        if keys[K_2] and self.has_machinegun:
             self.weapon = "machinegun"
         if keys[K_3]:
             self.weapon = "knife"
@@ -101,15 +131,16 @@ class Player:
             
         if mouse_buttons[0] and self.shoot_cooldown == 0 and self.weapon != "knife":
             if self.weapon == "pistol":
-                self.shoot_cooldown = 20  # Cooldown in frames
+                self.shoot_cooldown = PISTOL_COOLDOWN
                 return Bullet(self.x, self.y, self.angle, "pistol")
-            elif self.weapon == "machinegun":
-                self.shoot_cooldown = 5
+            elif self.weapon == "machinegun" and self.has_machinegun and self.machinegun_ammo > 0:
+                self.shoot_cooldown = MACHINEGUN_COOLDOWN
+                self.machinegun_ammo -= 1
                 return Bullet(self.x, self.y, self.angle, "machinegun")
                 
         # Knife attack
         if mouse_buttons[0] and self.knife_cooldown == 0 and self.weapon == "knife":
-            self.knife_cooldown = 30
+            self.knife_cooldown = KNIFE_COOLDOWN
             return KnifeAttack(self.x, self.y, self.angle)
             
         return None
@@ -118,10 +149,10 @@ class Player:
         # Draw the appropriate player image based on weapon
         if self.weapon == "pistol":
             img = player_pistol_img
-        elif self.weapon == "machinegun":
+        elif self.weapon == "machinegun" and self.has_machinegun:
             img = player_machinegun_img
-        else:  # knife
-            img = player_knife_img
+        else:  # knife or machinegun not available
+            img = player_knife_img if self.weapon == "knife" else player_pistol_img
             
         # Rotate image to face mouse
         rotated_img = pygame.transform.rotate(img, self.angle)
@@ -131,6 +162,13 @@ class Player:
         # Draw health bar
         pygame.draw.rect(screen, RED, (self.x - 25, self.y - 40, 50, 5))
         pygame.draw.rect(screen, GREEN, (self.x - 25, self.y - 40, 50 * (self.health / 100), 5))
+        
+    def add_health(self, amount):
+        self.health = min(100, self.health + amount)
+        
+    def pickup_machinegun(self, ammo=MACHINEGUN_PICKUP_AMMO):
+        self.has_machinegun = True
+        self.machinegun_ammo += ammo
         
     def take_damage(self, amount):
         self.health -= amount
@@ -142,12 +180,17 @@ class Zombie:
         self.y = y
         self.zombie_type = zombie_type
         self.speed = ZOMBIE_SPEED
-        self.health = 30 if zombie_type == "normal" else 50
-        self.damage = 10 if zombie_type == "normal" else 20
+        self.health = ZOMBIE_NORMAL_HEALTH if zombie_type == "normal" else ZOMBIE_STRONG_HEALTH
+        self.damage = ZOMBIE_NORMAL_DAMAGE if zombie_type == "normal" else ZOMBIE_STRONG_DAMAGE
         self.base_image = zombie_img if zombie_type == "normal" else zombie2_img
         self.angle = 0
+        self.attack_cooldown = 0
         
     def update(self, player_x, player_y):
+        # Update attack cooldown
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= 1
+            
         # Move towards player
         dx = player_x - self.x
         dy = player_y - self.y
@@ -155,6 +198,15 @@ class Zombie:
         self.x += (dx / dist) * self.speed
         self.y += (dy / dist) * self.speed
         self.angle = math.degrees(math.atan2(-dy, dx)) % 360
+        
+    def can_attack(self):
+        """Check if zombie can attack (cooldown expired)"""
+        return self.attack_cooldown == 0
+        
+    def attack(self):
+        """Perform attack and set cooldown"""
+        self.attack_cooldown = ZOMBIE_ATTACK_COOLDOWN
+        return self.damage
         
     def draw(self, screen):
         rotated = pygame.transform.rotate(self.base_image, self.angle)
@@ -164,7 +216,7 @@ class Zombie:
         # Draw health bar
         health_width = 30
         pygame.draw.rect(screen, RED, (self.x - health_width//2, self.y - 30, health_width, 5))
-        max_health = 30 if self.zombie_type == "normal" else 50
+        max_health = ZOMBIE_NORMAL_HEALTH if self.zombie_type == "normal" else ZOMBIE_STRONG_HEALTH
         pygame.draw.rect(screen, GREEN, (self.x - health_width//2, self.y - 30, health_width * (self.health / max_health), 5))
         
     def take_damage(self, amount):
@@ -183,7 +235,7 @@ class Bullet:
         self.angle = math.radians(angle)
         self.weapon_type = weapon_type
         self.speed = BULLET_SPEED
-        self.damage = 20 if weapon_type == "pistol" else 10
+        self.damage = PISTOL_DAMAGE if weapon_type == "pistol" else MACHINEGUN_DAMAGE
         
     def update(self):
         self.x += math.cos(self.angle) * self.speed
@@ -206,9 +258,9 @@ class KnifeAttack:
         self.x = x
         self.y = y
         self.angle = math.radians(angle)
-        self.range = 50
-        self.damage = 40
-        self.lifetime = 5  # Frames
+        self.range = KNIFE_RANGE
+        self.damage = KNIFE_DAMAGE
+        self.lifetime = KNIFE_LIFETIME
         
     def update(self):
         self.lifetime -= 1
@@ -239,6 +291,35 @@ class KnifeAttack:
         
         return angle_diff <= math.radians(45)
 
+class Pickup:
+    def __init__(self, x, y, pickup_type):
+        self.x = x
+        self.y = y
+        self.pickup_type = pickup_type  # "health" or "machinegun"
+        self.lifetime = PICKUP_LIFETIME
+        
+    def update(self):
+        self.lifetime -= 1
+        return self.lifetime <= 0
+        
+    def draw(self, screen):
+        if self.pickup_type == "health":
+            # Draw red cross/health pack
+            pygame.draw.rect(screen, RED, (self.x - 15, self.y - 3, 30, 6))
+            pygame.draw.rect(screen, RED, (self.x - 3, self.y - 15, 6, 30))
+            pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
+        elif self.pickup_type == "machinegun":
+            # Draw machine gun icon (simple rectangle with bullets)
+            pygame.draw.rect(screen, (100, 100, 100), (self.x - 12, self.y - 4, 24, 8))
+            pygame.draw.rect(screen, (150, 150, 150), (self.x - 8, self.y - 2, 16, 4))
+            # Draw ammo indicator
+            pygame.draw.circle(screen, YELLOW, (int(self.x + 10), int(self.y)), 3)
+            pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
+            
+    def check_collision(self, player_x, player_y):
+        distance = math.hypot(player_x - self.x, player_y - self.y)
+        return distance < 25
+
 def spawn_zombie():
     # Spawn zombies from outside the screen
     side = random.randint(0, 3)
@@ -255,8 +336,8 @@ def spawn_zombie():
         x = -50
         y = random.randint(0, SCREEN_HEIGHT)
         
-    # 20% chance for a stronger zombie
-    zombie_type = "strong" if random.random() < 0.2 else "normal"
+    # Chance for a stronger zombie based on probability
+    zombie_type = "strong" if random.random() < ZOMBIE_TYPE2_SPAWN_PROBABILITY else "normal"
     return Zombie(x, y, zombie_type)
 
 def draw_ui(screen, player, wave, zombies_killed):
@@ -276,13 +357,21 @@ def draw_ui(screen, player, wave, zombies_killed):
     weapon_text = font.render(f"Weapon: {player.weapon.capitalize()}", True, WHITE)
     screen.blit(weapon_text, (SCREEN_WIDTH - 200, 10))
     
-    # Draw weapon keys
-    keys_text = font.render("1:Pistol  2:Machine Gun  3:Knife", True, WHITE)
+    # Draw weapon keys (only show machine gun if available)
+    if player.has_machinegun:
+        keys_text = font.render("1:Pistol  2:Machine Gun  3:Knife", True, WHITE)
+    else:
+        keys_text = font.render("1:Pistol  [Locked]  3:Knife", True, WHITE)
     screen.blit(keys_text, (SCREEN_WIDTH - 300, 50))
     
     # Draw health text
     health_text = font.render(f"Health: {player.health}", True, WHITE)
     screen.blit(health_text, (SCREEN_WIDTH - 150, 90))
+    
+    # Draw machine gun ammo if available
+    if player.has_machinegun:
+        ammo_text = font.render(f"MG Ammo: {player.machinegun_ammo}", True, YELLOW)
+        screen.blit(ammo_text, (SCREEN_WIDTH - 200, 130))
 
 def draw_game_over(screen, score, zombies_killed, wave):
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
@@ -318,6 +407,7 @@ def main():
     zombies = []
     bullets = []
     knife_attacks = []
+    pickups = []
     
     zombies_killed = 0
     wave = 1
@@ -352,6 +442,22 @@ def main():
                 else:  # KnifeAttack
                     knife_attacks.append(new_bullet)
             
+            # Update pickups and check collisions
+            pickups_to_remove = []
+            for pickup in pickups:
+                if pickup.update():
+                    pickups_to_remove.append(pickup)
+                elif pickup.check_collision(player.x, player.y):
+                    if pickup.pickup_type == "health":
+                        player.add_health(HEALTH_PICKUP_AMOUNT)
+                    elif pickup.pickup_type == "machinegun":
+                        player.pickup_machinegun(MACHINEGUN_PICKUP_AMMO)
+                    pickups_to_remove.append(pickup)
+            
+            for pickup in pickups_to_remove:
+                if pickup in pickups:
+                    pickups.remove(pickup)
+            
             # Update bullets
             bullets_to_remove = []
             for bullet in bullets:
@@ -366,6 +472,12 @@ def main():
                                 zombies_to_remove.append(zombie)
                                 player.score += 10 if zombie.zombie_type == "normal" else 20
                                 zombies_killed += 1
+                                # Drop pickup when zombie dies based on probability settings
+                                drop_chance = random.random()
+                                if drop_chance < HEALTH_PICKUP_DROP_PROBABILITY:
+                                    pickups.append(Pickup(zombie.x, zombie.y, "health"))
+                                elif drop_chance < HEALTH_PICKUP_DROP_PROBABILITY + MACHINEGUN_PICKUP_DROP_PROBABILITY:
+                                    pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
                             bullets_to_remove.append(bullet)
                             break
                     
@@ -392,6 +504,12 @@ def main():
                                 zombies_to_remove.append(zombie)
                                 player.score += 10 if zombie.zombie_type == "normal" else 20
                                 zombies_killed += 1
+                                # Drop pickup when zombie dies based on probability settings
+                                drop_chance = random.random()
+                                if drop_chance < HEALTH_PICKUP_DROP_PROBABILITY:
+                                    pickups.append(Pickup(zombie.x, zombie.y, "health"))
+                                elif drop_chance < HEALTH_PICKUP_DROP_PROBABILITY + MACHINEGUN_PICKUP_DROP_PROBABILITY:
+                                    pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
                     
                     # Remove dead zombies
                     for zombie in zombies_to_remove:
@@ -417,10 +535,12 @@ def main():
             for zombie in zombies:
                 zombie.update(player.x, player.y)
                 
-                # Check for zombie-player collision
+                # Check for zombie-player collision and attack with cooldown
                 if zombie.check_collision_with_player(player.x, player.y):
-                    if player.take_damage(zombie.damage):
-                        game_over = True
+                    if zombie.can_attack():
+                        damage = zombie.attack()
+                        if player.take_damage(damage):
+                            game_over = True
         
         # Draw everything
         # Draw background image (falls back to solid fill if needed)
@@ -443,6 +563,10 @@ def main():
         # Draw knife attacks
         for knife in knife_attacks:
             knife.draw(screen)
+        
+        # Draw pickups
+        for pickup in pickups:
+            pickup.draw(screen)
         
         # Draw UI
         draw_ui(screen, player, wave, zombies_killed)
