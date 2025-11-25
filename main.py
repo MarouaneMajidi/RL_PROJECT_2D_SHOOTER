@@ -6,7 +6,7 @@ import random
 from pygame.locals import *
 
 # Asset constants
-ASSET_DIR = os.path.join(os.path.dirname(__file__), "topdown")
+ASSET_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 # Initialize pygame
 pygame.init()
