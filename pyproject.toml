@@ -1,9 +1,11 @@
 [project]
 name = "rl-game"
 version = "0.1.0"
-description = "Add your description here"
+description = "A 2D zombie shooter with PPO reinforcement learning agent"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pygame>=2.6.1",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
 ]
