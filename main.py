@@ -1,3 +1,17 @@
+"""
+Top-Down Zombie Shooter
+
+A 2D top-down shooter game with zombie enemies.
+Supports two modes:
+1. Manual mode - Player controls with keyboard and mouse
+2. Agent mode - PPO reinforcement learning agent plays the game
+
+FIXED ISSUES:
+1. Wave reset bug - wave, spawn_rate, and all tracking now properly reset
+2. Machine gun support in agent mode - agent can switch weapons
+3. Added comprehensive resetGame() method for clean restarts
+"""
+
 import os
 import pygame
 import sys
@@ -26,35 +40,34 @@ FPS = 60
 PLAYER_SPEED = 5
 ZOMBIE_SPEED = 2
 BULLET_SPEED = 10
-SPAWN_RATE = 60  # Frames between zombie spawns
+SPAWN_RATE = 60  # Initial frames between zombie spawns
 
 # Probability and Spawn Settings
-ZOMBIE_TYPE2_SPAWN_PROBABILITY = 0.2  # Probability of spawning strong zombie (zombie 2) instead of normal zombie (zombie 1)
-HEALTH_PICKUP_DROP_PROBABILITY = 0.40  # Probability of health pickup dropping when zombie is killed (0.0 to 1.0)
-MACHINEGUN_PICKUP_DROP_PROBABILITY = 0.15  # Probability of machine gun pickup dropping when zombie is killed (0.0 to 1.0)
-# Note: Pickup probabilities are checked sequentially, so health check happens first, then machine gun
+ZOMBIE_TYPE2_SPAWN_PROBABILITY = 0.2
+HEALTH_PICKUP_DROP_PROBABILITY = 0.40
+MACHINEGUN_PICKUP_DROP_PROBABILITY = 0.15
 
 # Pickup Configuration
-HEALTH_PICKUP_AMOUNT = 25  # Amount of health restored when collecting health pickup
-MACHINEGUN_PICKUP_AMMO = 50  # Amount of ammo given when collecting machine gun pickup
-PICKUP_LIFETIME = 600  # Lifetime of pickups in frames (600 frames = 10 seconds at 60 FPS)
+HEALTH_PICKUP_AMOUNT = 25
+MACHINEGUN_PICKUP_AMMO = 50
+PICKUP_LIFETIME = 600
 
 # Weapon Configuration
-PISTOL_COOLDOWN = 20  # Cooldown between pistol shots (in frames)
-MACHINEGUN_COOLDOWN = 5  # Cooldown between machine gun shots (in frames)
-KNIFE_COOLDOWN = 30  # Cooldown between knife attacks (in frames)
-PISTOL_DAMAGE = 20  # Damage dealt by pistol bullets
-MACHINEGUN_DAMAGE = 10  # Damage dealt by machine gun bullets
-KNIFE_DAMAGE = 40  # Damage dealt by knife attacks
-KNIFE_RANGE = 50  # Range of knife attack
-KNIFE_LIFETIME = 5  # Lifetime of knife attack visual (in frames)
+PISTOL_COOLDOWN = 20
+MACHINEGUN_COOLDOWN = 5
+KNIFE_COOLDOWN = 30
+PISTOL_DAMAGE = 20
+MACHINEGUN_DAMAGE = 10
+KNIFE_DAMAGE = 40
+KNIFE_RANGE = 50
+KNIFE_LIFETIME = 5
 
 # Zombie Configuration
-ZOMBIE_NORMAL_HEALTH = 30  # Health of normal zombie (zombie 1)
-ZOMBIE_NORMAL_DAMAGE = 10  # Damage dealt by normal zombie per attack
-ZOMBIE_STRONG_HEALTH = 50  # Health of strong zombie (zombie 2)
-ZOMBIE_STRONG_DAMAGE = 20  # Damage dealt by strong zombie per attack
-ZOMBIE_ATTACK_COOLDOWN = 9  # Cooldown between zombie attacks (in frames, 9 frames = 0.15 seconds at 60 FPS)
+ZOMBIE_NORMAL_HEALTH = 30
+ZOMBIE_NORMAL_DAMAGE = 10
+ZOMBIE_STRONG_HEALTH = 50
+ZOMBIE_STRONG_DAMAGE = 20
+ZOMBIE_ATTACK_COOLDOWN = 9
 
 # Colors
 BLACK = (0, 0, 0)
@@ -88,8 +101,13 @@ zombie2_img = load_sprite("zombie 2.gif", 1.2)
 background_img = pygame.image.load(os.path.join(ASSET_DIR, "background.png")).convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
+
 class Player:
     def __init__(self):
+        self.reset()
+        
+    def reset(self):
+        """Reset player to initial state."""
         self.x = SCREEN_WIDTH // 2
         self.y = SCREEN_HEIGHT // 2
         self.angle = 0
@@ -99,8 +117,8 @@ class Player:
         self.shoot_cooldown = 0
         self.knife_cooldown = 0
         self.speed = PLAYER_SPEED
-        self.has_machinegun = False  # Machine gun must be picked up
-        self.machinegun_ammo = 0  # Ammo for machine gun
+        self.has_machinegun = False
+        self.machinegun_ammo = 0
         
     def update(self, keys, mouse_pos, mouse_buttons):
         # Calculate angle to mouse position
@@ -144,6 +162,10 @@ class Player:
             elif self.weapon == "machinegun" and self.has_machinegun and self.machinegun_ammo > 0:
                 self.shoot_cooldown = MACHINEGUN_COOLDOWN
                 self.machinegun_ammo -= 1
+                # Auto-switch to pistol when out of ammo
+                if self.machinegun_ammo <= 0:
+                    self.has_machinegun = False
+                    self.weapon = "pistol"
                 return Bullet(self.x, self.y, self.angle, "machinegun")
                 
         # Knife attack
@@ -159,7 +181,7 @@ class Player:
             img = player_pistol_img
         elif self.weapon == "machinegun" and self.has_machinegun:
             img = player_machinegun_img
-        else:  # knife or machinegun not available
+        else:
             img = player_knife_img if self.weapon == "knife" else player_pistol_img
             
         # Rotate image to face mouse
@@ -182,6 +204,7 @@ class Player:
         self.health -= amount
         return self.health <= 0
 
+
 class Zombie:
     def __init__(self, x, y, zombie_type="normal"):
         self.x = x
@@ -195,24 +218,20 @@ class Zombie:
         self.attack_cooldown = 0
         
     def update(self, player_x, player_y):
-        # Update attack cooldown
         if self.attack_cooldown > 0:
             self.attack_cooldown -= 1
             
-        # Move towards player
         dx = player_x - self.x
         dy = player_y - self.y
-        dist = max(0.1, math.hypot(dx, dy))  # Avoid division by zero
+        dist = max(0.1, math.hypot(dx, dy))
         self.x += (dx / dist) * self.speed
         self.y += (dy / dist) * self.speed
         self.angle = math.degrees(math.atan2(-dy, dx)) % 360
         
     def can_attack(self):
-        """Check if zombie can attack (cooldown expired)"""
         return self.attack_cooldown == 0
         
     def attack(self):
-        """Perform attack and set cooldown"""
         self.attack_cooldown = ZOMBIE_ATTACK_COOLDOWN
         return self.damage
         
@@ -221,7 +240,6 @@ class Zombie:
         rect = rotated.get_rect(center=(self.x, self.y))
         screen.blit(rotated, rect)
         
-        # Draw health bar
         health_width = 30
         pygame.draw.rect(screen, RED, (self.x - health_width//2, self.y - 30, health_width, 5))
         max_health = ZOMBIE_NORMAL_HEALTH if self.zombie_type == "normal" else ZOMBIE_STRONG_HEALTH
@@ -232,9 +250,9 @@ class Zombie:
         return self.health <= 0
         
     def check_collision_with_player(self, player_x, player_y):
-        # Simple circle collision
         distance = math.hypot(player_x - self.x, player_y - self.y)
         return distance < 30
+
 
 class Bullet:
     def __init__(self, x, y, angle, weapon_type):
@@ -248,18 +266,17 @@ class Bullet:
     def update(self):
         self.x += math.cos(self.angle) * self.speed
         self.y -= math.sin(self.angle) * self.speed
-        
-        # Check if bullet is off screen
         return (self.x < 0 or self.x > SCREEN_WIDTH or 
                 self.y < 0 or self.y > SCREEN_HEIGHT)
         
     def draw(self, screen):
-        color = YELLOW if self.weapon_type == "pistol" else (255, 165, 0)  # Orange for machinegun
+        color = YELLOW if self.weapon_type == "pistol" else (255, 165, 0)
         pygame.draw.circle(screen, color, (int(self.x), int(self.y)), 4)
         
     def check_collision(self, zombie):
         distance = math.hypot(self.x - zombie.x, self.y - zombie.y)
         return distance < 25
+
 
 class KnifeAttack:
     def __init__(self, x, y, angle):
@@ -275,7 +292,6 @@ class KnifeAttack:
         return self.lifetime <= 0
         
     def draw(self, screen):
-        # Draw knife attack arc
         start_angle = self.angle - math.radians(45)
         end_angle = self.angle + math.radians(45)
         pygame.draw.arc(screen, WHITE, 
@@ -287,23 +303,20 @@ class KnifeAttack:
         distance = math.hypot(self.x - zombie.x, self.y - zombie.y)
         if distance > self.range:
             return False
-            
-        # Check if zombie is within the arc
         dx = zombie.x - self.x
         dy = zombie.y - self.y
         zombie_angle = math.atan2(-dy, dx) % (2 * math.pi)
         attack_angle = self.angle % (2 * math.pi)
-        
         angle_diff = abs(zombie_angle - attack_angle)
         angle_diff = min(angle_diff, 2 * math.pi - angle_diff)
-        
         return angle_diff <= math.radians(45)
+
 
 class Pickup:
     def __init__(self, x, y, pickup_type):
         self.x = x
         self.y = y
-        self.pickup_type = pickup_type  # "health" or "machinegun"
+        self.pickup_type = pickup_type
         self.lifetime = PICKUP_LIFETIME
         
     def update(self):
@@ -312,15 +325,12 @@ class Pickup:
         
     def draw(self, screen):
         if self.pickup_type == "health":
-            # Draw red cross/health pack
             pygame.draw.rect(screen, RED, (self.x - 15, self.y - 3, 30, 6))
             pygame.draw.rect(screen, RED, (self.x - 3, self.y - 15, 6, 30))
             pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
         elif self.pickup_type == "machinegun":
-            # Draw machine gun icon (simple rectangle with bullets)
             pygame.draw.rect(screen, (100, 100, 100), (self.x - 12, self.y - 4, 24, 8))
             pygame.draw.rect(screen, (150, 150, 150), (self.x - 8, self.y - 2, 16, 4))
-            # Draw ammo indicator
             pygame.draw.circle(screen, YELLOW, (int(self.x + 10), int(self.y)), 3)
             pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
             
@@ -328,28 +338,88 @@ class Pickup:
         distance = math.hypot(player_x - self.x, player_y - self.y)
         return distance < 25
 
+
+class GameState:
+    """
+    Manages all game state in one place.
+    Provides a clean resetGame() method that ensures everything is properly reset.
+    
+    FIXES THE WAVE RESET BUG:
+    - All state variables are centralized here
+    - resetGame() resets EVERYTHING including wave and spawn_rate
+    - No more desync between UI wave counter and internal logic
+    """
+    
+    def __init__(self):
+        self.player = None
+        self.zombies = []
+        self.bullets = []
+        self.knife_attacks = []
+        self.pickups = []
+        self.zombies_killed = 0
+        self.wave = 1
+        self.spawn_timer = 0
+        self.spawn_rate = SPAWN_RATE
+        self.game_over = False
+        
+    def resetGame(self):
+        """
+        COMPLETE GAME RESET - Fixes the wave reset bug.
+        
+        This method ensures ALL game state is reset to initial values:
+        1. Player state (position, health, weapons)
+        2. Enemy lists (zombies, bullets, etc.)
+        3. Wave counter and spawn rate
+        4. All timers and tracking variables
+        
+        Call this when:
+        - Starting a new game
+        - Player dies and presses R to retry
+        - Resetting the environment in RL training
+        """
+        # Reset player
+        if self.player is None:
+            self.player = Player()
+        else:
+            self.player.reset()
+        
+        # Clear all game objects
+        self.zombies = []
+        self.bullets = []
+        self.knife_attacks = []
+        self.pickups = []
+        
+        # CRITICAL: Reset wave and spawn rate to initial values
+        self.wave = 1
+        self.spawn_rate = SPAWN_RATE  # Reset to initial spawn rate!
+        
+        # Reset tracking
+        self.zombies_killed = 0
+        self.spawn_timer = 0
+        self.game_over = False
+        
+        return self
+
+
 def spawn_zombie():
-    # Spawn zombies from outside the screen
     side = random.randint(0, 3)
-    if side == 0:  # Top
+    if side == 0:
         x = random.randint(0, SCREEN_WIDTH)
         y = -50
-    elif side == 1:  # Right
+    elif side == 1:
         x = SCREEN_WIDTH + 50
         y = random.randint(0, SCREEN_HEIGHT)
-    elif side == 2:  # Bottom
+    elif side == 2:
         x = random.randint(0, SCREEN_WIDTH)
         y = SCREEN_HEIGHT + 50
-    else:  # Left
+    else:
         x = -50
         y = random.randint(0, SCREEN_HEIGHT)
-        
-    # Chance for a stronger zombie based on probability
     zombie_type = "strong" if random.random() < ZOMBIE_TYPE2_SPAWN_PROBABILITY else "normal"
     return Zombie(x, y, zombie_type)
 
+
 def draw_ui(screen, player, wave, zombies_killed):
-    # Draw score and weapon info
     font = pygame.font.SysFont(None, 36)
     
     score_text = font.render(f"Score: {player.score}", True, WHITE)
@@ -361,25 +431,22 @@ def draw_ui(screen, player, wave, zombies_killed):
     kills_text = font.render(f"Zombies Killed: {zombies_killed}", True, WHITE)
     screen.blit(kills_text, (10, 90))
     
-    # Draw weapon info
     weapon_text = font.render(f"Weapon: {player.weapon.capitalize()}", True, WHITE)
     screen.blit(weapon_text, (SCREEN_WIDTH - 200, 10))
     
-    # Draw weapon keys (only show machine gun if available)
     if player.has_machinegun:
         keys_text = font.render("1:Pistol  2:Machine Gun  3:Knife", True, WHITE)
     else:
         keys_text = font.render("1:Pistol  [Locked]  3:Knife", True, WHITE)
     screen.blit(keys_text, (SCREEN_WIDTH - 300, 50))
     
-    # Draw health text
     health_text = font.render(f"Health: {player.health}", True, WHITE)
     screen.blit(health_text, (SCREEN_WIDTH - 150, 90))
     
-    # Draw machine gun ammo if available
     if player.has_machinegun:
         ammo_text = font.render(f"MG Ammo: {player.machinegun_ammo}", True, YELLOW)
         screen.blit(ammo_text, (SCREEN_WIDTH - 200, 130))
+
 
 def draw_game_over(screen, score, zombies_killed, wave):
     overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
@@ -407,23 +474,16 @@ def draw_game_over(screen, score, zombies_killed, wave):
     quit_text = font_medium.render("Press Q to Quit", True, RED)
     screen.blit(quit_text, (SCREEN_WIDTH//2 - quit_text.get_width()//2, SCREEN_HEIGHT//2 + 230))
 
+
 def main_manual_mode():
     """
     Manual mode - player controls with keyboard and mouse.
+    
+    FIXED: Uses GameState class for proper wave reset on player death.
     """
-    # Use a local variable for spawn rate instead of global
-    spawn_rate = SPAWN_RATE
-    
-    player = Player()
-    zombies = []
-    bullets = []
-    knife_attacks = []
-    pickups = []
-    
-    zombies_killed = 0
-    wave = 1
-    spawn_timer = 0
-    game_over = False
+    # Initialize game state using the new GameState class
+    game = GameState()
+    game.resetGame()
     
     while True:
         # Handle events
@@ -432,159 +492,137 @@ def main_manual_mode():
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN:
-                if game_over and event.key == K_r:
-                    # Restart game
-                    return main_manual_mode()
-                if game_over and event.key == K_q:
+                if game.game_over and event.key == K_r:
+                    # FIXED: Use resetGame() for complete reset including wave
+                    game.resetGame()
+                if game.game_over and event.key == K_q:
                     pygame.quit()
                     sys.exit()
         
-        if not game_over:
+        if not game.game_over:
             # Get input
             keys = pygame.key.get_pressed()
             mouse_buttons = pygame.mouse.get_pressed()
             mouse_pos = pygame.mouse.get_pos()
             
             # Update player
-            new_bullet = player.update(keys, mouse_pos, mouse_buttons)
+            new_bullet = game.player.update(keys, mouse_pos, mouse_buttons)
             if new_bullet:
                 if isinstance(new_bullet, Bullet):
-                    bullets.append(new_bullet)
-                else:  # KnifeAttack
-                    knife_attacks.append(new_bullet)
+                    game.bullets.append(new_bullet)
+                else:
+                    game.knife_attacks.append(new_bullet)
             
             # Update pickups and check collisions
             pickups_to_remove = []
-            for pickup in pickups:
+            for pickup in game.pickups:
                 if pickup.update():
                     pickups_to_remove.append(pickup)
-                elif pickup.check_collision(player.x, player.y):
+                elif pickup.check_collision(game.player.x, game.player.y):
                     if pickup.pickup_type == "health":
-                        player.add_health(HEALTH_PICKUP_AMOUNT)
+                        game.player.add_health(HEALTH_PICKUP_AMOUNT)
                     elif pickup.pickup_type == "machinegun":
-                        player.pickup_machinegun(MACHINEGUN_PICKUP_AMMO)
+                        game.player.pickup_machinegun(MACHINEGUN_PICKUP_AMMO)
                     pickups_to_remove.append(pickup)
             
             for pickup in pickups_to_remove:
-                if pickup in pickups:
-                    pickups.remove(pickup)
+                if pickup in game.pickups:
+                    game.pickups.remove(pickup)
             
             # Update bullets
             bullets_to_remove = []
-            for bullet in bullets:
+            for bullet in game.bullets:
                 if bullet.update():
                     bullets_to_remove.append(bullet)
                 else:
-                    # Check bullet collisions with zombies
                     zombies_to_remove = []
-                    for zombie in zombies:
+                    for zombie in game.zombies:
                         if bullet.check_collision(zombie):
                             if zombie.take_damage(bullet.damage):
                                 zombies_to_remove.append(zombie)
-                                player.score += 10 if zombie.zombie_type == "normal" else 20
-                                zombies_killed += 1
-                                # Drop pickup when zombie dies based on probability settings
+                                game.player.score += 10 if zombie.zombie_type == "normal" else 20
+                                game.zombies_killed += 1
                                 drop_chance = random.random()
                                 if drop_chance < HEALTH_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "health"))
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "health"))
                                 elif drop_chance < HEALTH_PICKUP_DROP_PROBABILITY + MACHINEGUN_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
                             bullets_to_remove.append(bullet)
                             break
-                    
-                    # Remove dead zombies
                     for zombie in zombies_to_remove:
-                        zombies.remove(zombie)
+                        game.zombies.remove(zombie)
             
-            # Remove bullets that are off screen or hit a zombie
             for bullet in bullets_to_remove:
-                if bullet in bullets:
-                    bullets.remove(bullet)
+                if bullet in game.bullets:
+                    game.bullets.remove(bullet)
             
             # Update knife attacks
             knife_attacks_to_remove = []
-            for knife in knife_attacks:
+            for knife in game.knife_attacks:
                 if knife.update():
                     knife_attacks_to_remove.append(knife)
                 else:
-                    # Check knife collisions with zombies
                     zombies_to_remove = []
-                    for zombie in zombies:
+                    for zombie in game.zombies:
                         if knife.check_collision(zombie):
                             if zombie.take_damage(knife.damage):
                                 zombies_to_remove.append(zombie)
-                                player.score += 10 if zombie.zombie_type == "normal" else 20
-                                zombies_killed += 1
-                                # Drop pickup when zombie dies based on probability settings
+                                game.player.score += 10 if zombie.zombie_type == "normal" else 20
+                                game.zombies_killed += 1
                                 drop_chance = random.random()
                                 if drop_chance < HEALTH_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "health"))
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "health"))
                                 elif drop_chance < HEALTH_PICKUP_DROP_PROBABILITY + MACHINEGUN_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
-                    
-                    # Remove dead zombies
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
                     for zombie in zombies_to_remove:
-                        zombies.remove(zombie)
+                        game.zombies.remove(zombie)
             
-            # Remove expired knife attacks
             for knife in knife_attacks_to_remove:
-                if knife in knife_attacks:
-                    knife_attacks.remove(knife)
+                if knife in game.knife_attacks:
+                    game.knife_attacks.remove(knife)
             
-            # Spawn zombies
-            spawn_timer += 1
-            if spawn_timer >= spawn_rate:
-                zombies.append(spawn_zombie())
-                spawn_timer = 0
+            # Spawn zombies with wave progression
+            game.spawn_timer += 1
+            if game.spawn_timer >= game.spawn_rate:
+                game.zombies.append(spawn_zombie())
+                game.spawn_timer = 0
                 
                 # Increase spawn rate every 10 zombies killed
-                if zombies_killed > 0 and zombies_killed % 10 == 0:
-                    spawn_rate = max(10, spawn_rate - 5)
-                    wave += 1
+                if game.zombies_killed > 0 and game.zombies_killed % 10 == 0:
+                    expected_wave = (game.zombies_killed // 10) + 1
+                    if expected_wave > game.wave:
+                        game.wave = expected_wave
+                        game.spawn_rate = max(10, game.spawn_rate - 5)
             
             # Update zombies
-            for zombie in zombies:
-                zombie.update(player.x, player.y)
-                
-                # Check for zombie-player collision and attack with cooldown
-                if zombie.check_collision_with_player(player.x, player.y):
+            for zombie in game.zombies:
+                zombie.update(game.player.x, game.player.y)
+                if zombie.check_collision_with_player(game.player.x, game.player.y):
                     if zombie.can_attack():
                         damage = zombie.attack()
-                        if player.take_damage(damage):
-                            game_over = True
+                        if game.player.take_damage(damage):
+                            game.game_over = True
         
         # Draw everything
-        # Draw background image (falls back to solid fill if needed)
         if background_img:
             screen.blit(background_img, (0, 0))
         else:
             screen.fill(BG_COLOR)
         
-        # Draw player
-        player.draw(screen)
-        
-        # Draw zombies
-        for zombie in zombies:
+        game.player.draw(screen)
+        for zombie in game.zombies:
             zombie.draw(screen)
-        
-        # Draw bullets
-        for bullet in bullets:
+        for bullet in game.bullets:
             bullet.draw(screen)
-            
-        # Draw knife attacks
-        for knife in knife_attacks:
+        for knife in game.knife_attacks:
             knife.draw(screen)
-        
-        # Draw pickups
-        for pickup in pickups:
+        for pickup in game.pickups:
             pickup.draw(screen)
         
-        # Draw UI
-        draw_ui(screen, player, wave, zombies_killed)
+        draw_ui(screen, game.player, game.wave, game.zombies_killed)
         
-        # Draw game over screen if needed
-        if game_over:
-            draw_game_over(screen, player.score, zombies_killed, wave)
+        if game.game_over:
+            draw_game_over(screen, game.player.score, game.zombies_killed, game.wave)
         
         pygame.display.flip()
         clock.tick(FPS)
@@ -594,6 +632,11 @@ def main_agent_mode(model_path: str):
     """
     Agent mode - PPO agent controls the player using FULL game with assets.
     
+    FIXED:
+    1. Uses GameState class for proper wave reset
+    2. Machine gun support with weapon switching actions
+    3. Extended action space (8 actions)
+    
     Args:
         model_path: Path to trained PPO model checkpoint
     """
@@ -601,7 +644,6 @@ def main_agent_mode(model_path: str):
         print("Error: PPO agent not available. Please install PyTorch and train a model first.")
         return
     
-    # Load agent
     print(f"Loading PPO agent from: {model_path}")
     from ppo_agent import PPOConfig, PPOAgent
     config = PPOConfig()
@@ -615,53 +657,49 @@ def main_agent_mode(model_path: str):
         return
     
     print("\nAgent is now playing with FULL game assets!")
+    print("Extended action space: 0-3=Move, 4=Shoot, 5=Idle, 6=Pistol, 7=MachineGun")
     print("Press ESC to quit, R to restart episode")
     print("="*50)
     
-    # Use local variable for spawn rate
-    spawn_rate = SPAWN_RATE
+    import numpy as np
     
-    # Initialize game with full assets
-    player = Player()
-    zombies = []
-    bullets = []
-    knife_attacks = []
-    pickups = []
-    
-    zombies_killed = 0
-    wave = 1
-    spawn_timer = 0
-    game_over = False
+    # Initialize game state using GameState class
+    game = GameState()
+    game.resetGame()
     
     episode_reward = 0
     episode_steps = 0
     episodes = 0
     
-    # Helper function to get state for agent
     def get_agent_state():
-        """Extract state for the agent in the same format as env.py"""
+        """Extract state for the agent matching the new env.py format."""
         state = []
-        # Player state
+        
+        # Player state (12 values)
         state.extend([
-            player.x / SCREEN_WIDTH,
-            player.y / SCREEN_HEIGHT,
+            game.player.x / SCREEN_WIDTH,
+            game.player.y / SCREEN_HEIGHT,
             0.0, 0.0,  # velocities
-            player.health / 100.0,
-            player.shoot_cooldown / PISTOL_COOLDOWN,
-            player.angle / 360.0,
-            min(len(zombies), config.max_zombies) / config.max_zombies
+            game.player.health / 100.0,
+            game.player.shoot_cooldown / PISTOL_COOLDOWN,
+            game.player.angle / 360.0,
+            min(len(game.zombies), config.max_zombies) / config.max_zombies,
+            1.0 if game.player.has_machinegun else 0.0,
+            min(game.player.machinegun_ammo / 100.0, 1.0),
+            1.0 if game.player.weapon == "machinegun" else 0.0,
+            compute_danger_level()
         ])
         
         # Zombie states (sort by distance, take closest max_zombies)
-        zombies_sorted = sorted(zombies, 
-                               key=lambda z: math.hypot(player.x - z.x, player.y - z.y))
+        zombies_sorted = sorted(game.zombies, 
+                               key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y))
         
         for i in range(config.max_zombies):
             if i < len(zombies_sorted):
                 zombie = zombies_sorted[i]
-                distance = math.hypot(player.x - zombie.x, player.y - zombie.y)
-                dx = zombie.x - player.x
-                dy = zombie.y - player.y
+                distance = math.hypot(game.player.x - zombie.x, game.player.y - zombie.y)
+                dx = zombie.x - game.player.x
+                dy = zombie.y - game.player.y
                 angle_to_zombie = math.degrees(math.atan2(-dy, dx)) % 360
                 
                 state.extend([
@@ -675,147 +713,214 @@ def main_agent_mode(model_path: str):
             else:
                 state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
         
+        # Nearest health pack info (3 values)
+        nearest_health = get_nearest_pickup('health')
+        if nearest_health:
+            health_dist = math.hypot(game.player.x - nearest_health.x, 
+                                    game.player.y - nearest_health.y)
+            dx = nearest_health.x - game.player.x
+            dy = nearest_health.y - game.player.y
+            health_angle = math.degrees(math.atan2(-dy, dx)) % 360
+            state.extend([
+                min(health_dist / 1000.0, 1.0),
+                health_angle / 360.0,
+                1.0
+            ])
+        else:
+            state.extend([1.0, 0.0, 0.0])
+        
+        # Nearest machinegun pickup info (3 values)
+        nearest_mg = get_nearest_pickup('machinegun')
+        if nearest_mg:
+            mg_dist = math.hypot(game.player.x - nearest_mg.x, 
+                                game.player.y - nearest_mg.y)
+            dx = nearest_mg.x - game.player.x
+            dy = nearest_mg.y - game.player.y
+            mg_angle = math.degrees(math.atan2(-dy, dx)) % 360
+            state.extend([
+                min(mg_dist / 1000.0, 1.0),
+                mg_angle / 360.0,
+                1.0
+            ])
+        else:
+            state.extend([1.0, 0.0, 0.0])
+        
         return np.array(state, dtype=np.float32)
     
-    # Get initial state
-    import numpy as np
+    def compute_danger_level():
+        """Compute danger level matching env.py."""
+        danger = 0.0
+        health_danger = 1.0 - (game.player.health / 100.0)
+        danger += health_danger * 0.4
+        
+        nearby_zombies = sum(1 for z in game.zombies 
+                            if math.hypot(game.player.x - z.x, game.player.y - z.y) < 150)
+        zombie_danger = min(nearby_zombies / 5.0, 1.0)
+        danger += zombie_danger * 0.4
+        
+        if game.zombies:
+            min_dist = min(math.hypot(game.player.x - z.x, game.player.y - z.y) 
+                          for z in game.zombies)
+            if min_dist < 50:
+                danger += 0.2
+        
+        return min(danger, 1.0)
+    
+    def get_nearest_pickup(pickup_type):
+        """Get nearest pickup of given type."""
+        pickups_of_type = [p for p in game.pickups if p.pickup_type == pickup_type]
+        if not pickups_of_type:
+            return None
+        return min(pickups_of_type, 
+                   key=lambda p: math.hypot(game.player.x - p.x, game.player.y - p.y))
+    
     state = get_agent_state()
     
     running = True
     while running:
-        # Handle events
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     running = False
-                if game_over and event.key == K_r:
-                    # Reset game
-                    player = Player()
-                    zombies = []
-                    bullets = []
-                    knife_attacks = []
-                    pickups = []
-                    zombies_killed = 0
-                    wave = 1
-                    spawn_timer = 0
-                    game_over = False
+                if game.game_over and event.key == K_r:
+                    # FIXED: Use resetGame() for complete reset
+                    game.resetGame()
                     episode_reward = 0
                     episode_steps = 0
                     state = get_agent_state()
                     print(f"\nEpisode {episodes} - Restarting...")
         
-        if not game_over:
+        if not game.game_over:
             # Get action from agent
             action, _, _ = agent.select_action(state, deterministic=True)
             
-            # Apply action: 0=Up, 1=Down, 2=Left, 3=Right, 4=Shoot, 5=Idle
+            # Apply action (extended action space)
             if action == 0:  # Move Up
-                player.y -= PLAYER_SPEED
+                game.player.y -= PLAYER_SPEED
             elif action == 1:  # Move Down
-                player.y += PLAYER_SPEED
+                game.player.y += PLAYER_SPEED
             elif action == 2:  # Move Left
-                player.x -= PLAYER_SPEED
+                game.player.x -= PLAYER_SPEED
             elif action == 3:  # Move Right
-                player.x += PLAYER_SPEED
+                game.player.x += PLAYER_SPEED
             elif action == 4:  # Shoot
-                if player.shoot_cooldown == 0:
-                    bullets.append(Bullet(player.x, player.y, player.angle, "pistol"))
-                    player.shoot_cooldown = PISTOL_COOLDOWN
+                if game.player.shoot_cooldown == 0:
+                    if game.player.weapon == "machinegun" and game.player.has_machinegun and game.player.machinegun_ammo > 0:
+                        game.bullets.append(Bullet(game.player.x, game.player.y, game.player.angle, "machinegun"))
+                        game.player.shoot_cooldown = MACHINEGUN_COOLDOWN
+                        game.player.machinegun_ammo -= 1
+                        if game.player.machinegun_ammo <= 0:
+                            game.player.has_machinegun = False
+                            game.player.weapon = "pistol"
+                    else:
+                        game.bullets.append(Bullet(game.player.x, game.player.y, game.player.angle, "pistol"))
+                        game.player.shoot_cooldown = PISTOL_COOLDOWN
+            elif action == 5:  # Idle
+                pass
+            elif action == 6:  # Switch to pistol
+                game.player.weapon = "pistol"
+            elif action == 7:  # Switch to machine gun
+                if game.player.has_machinegun and game.player.machinegun_ammo > 0:
+                    game.player.weapon = "machinegun"
             
             # Keep player on screen
-            player.x = max(0, min(SCREEN_WIDTH, player.x))
-            player.y = max(0, min(SCREEN_HEIGHT, player.y))
+            game.player.x = max(0, min(SCREEN_WIDTH, game.player.x))
+            game.player.y = max(0, min(SCREEN_HEIGHT, game.player.y))
             
             # Update cooldown
-            if player.shoot_cooldown > 0:
-                player.shoot_cooldown -= 1
+            if game.player.shoot_cooldown > 0:
+                game.player.shoot_cooldown -= 1
             
             # Update player angle to nearest zombie
-            if len(zombies) > 0:
-                nearest_zombie = min(zombies, key=lambda z: math.hypot(player.x - z.x, player.y - z.y))
-                dx = nearest_zombie.x - player.x
-                dy = nearest_zombie.y - player.y
-                player.angle = math.degrees(math.atan2(-dy, dx)) % 360
+            if len(game.zombies) > 0:
+                nearest_zombie = min(game.zombies, key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y))
+                dx = nearest_zombie.x - game.player.x
+                dy = nearest_zombie.y - game.player.y
+                game.player.angle = math.degrees(math.atan2(-dy, dx)) % 360
             
             # Update pickups
             pickups_to_remove = []
-            for pickup in pickups:
+            for pickup in game.pickups:
                 if pickup.update():
                     pickups_to_remove.append(pickup)
-                elif pickup.check_collision(player.x, player.y):
+                elif pickup.check_collision(game.player.x, game.player.y):
                     if pickup.pickup_type == "health":
-                        player.add_health(HEALTH_PICKUP_AMOUNT)
+                        game.player.add_health(HEALTH_PICKUP_AMOUNT)
                     elif pickup.pickup_type == "machinegun":
-                        player.pickup_machinegun(MACHINEGUN_PICKUP_AMMO)
+                        game.player.pickup_machinegun(MACHINEGUN_PICKUP_AMMO)
                     pickups_to_remove.append(pickup)
             for pickup in pickups_to_remove:
-                if pickup in pickups:
-                    pickups.remove(pickup)
+                if pickup in game.pickups:
+                    game.pickups.remove(pickup)
             
             # Update bullets
             bullets_to_remove = []
-            for bullet in bullets:
+            for bullet in game.bullets:
                 if bullet.update():
                     bullets_to_remove.append(bullet)
                 else:
                     zombies_to_remove = []
-                    for zombie in zombies:
+                    for zombie in game.zombies:
                         if bullet.check_collision(zombie):
                             if zombie.take_damage(bullet.damage):
                                 zombies_to_remove.append(zombie)
-                                player.score += 10 if zombie.zombie_type == "normal" else 20
-                                zombies_killed += 1
+                                game.player.score += 10 if zombie.zombie_type == "normal" else 20
+                                game.zombies_killed += 1
                                 episode_reward += 10
                                 drop_chance = random.random()
                                 if drop_chance < HEALTH_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "health"))
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "health"))
                                 elif drop_chance < HEALTH_PICKUP_DROP_PROBABILITY + MACHINEGUN_PICKUP_DROP_PROBABILITY:
-                                    pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
+                                    game.pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
                             bullets_to_remove.append(bullet)
                             break
                     for zombie in zombies_to_remove:
-                        zombies.remove(zombie)
+                        game.zombies.remove(zombie)
             for bullet in bullets_to_remove:
-                if bullet in bullets:
-                    bullets.remove(bullet)
+                if bullet in game.bullets:
+                    game.bullets.remove(bullet)
             
-            # Spawn zombies
-            spawn_timer += 1
-            if spawn_timer >= spawn_rate:
-                zombies.append(spawn_zombie())
-                spawn_timer = 0
-                if zombies_killed > 0 and zombies_killed % 10 == 0:
-                    spawn_rate = max(10, spawn_rate - 5)
-                    wave += 1
+            # Spawn zombies with wave progression
+            game.spawn_timer += 1
+            if game.spawn_timer >= game.spawn_rate:
+                game.zombies.append(spawn_zombie())
+                game.spawn_timer = 0
+                if game.zombies_killed > 0 and game.zombies_killed % 10 == 0:
+                    expected_wave = (game.zombies_killed // 10) + 1
+                    if expected_wave > game.wave:
+                        game.wave = expected_wave
+                        game.spawn_rate = max(10, game.spawn_rate - 5)
             
             # Update zombies
-            for zombie in zombies:
-                zombie.update(player.x, player.y)
-                if zombie.check_collision_with_player(player.x, player.y):
+            for zombie in game.zombies:
+                zombie.update(game.player.x, game.player.y)
+                if zombie.check_collision_with_player(game.player.x, game.player.y):
                     if zombie.can_attack():
                         damage = zombie.attack()
-                        if player.take_damage(damage):
-                            game_over = True
+                        if game.player.take_damage(damage):
+                            game.game_over = True
                             episodes += 1
                             print(f"\n{'='*50}")
                             print(f"Episode {episodes} finished!")
                             print(f"Total Reward: {episode_reward:.2f}")
                             print(f"Steps: {episode_steps}")
-                            print(f"Zombies Killed: {zombies_killed}")
+                            print(f"Zombies Killed: {game.zombies_killed}")
+                            print(f"Wave Reached: {game.wave}")
+                            print(f"Weapon: {game.player.weapon}")
                             print("Result: DIED")
                             print(f"{'='*50}\n")
             
             # Update state
             state = get_agent_state()
             episode_steps += 1
-            episode_reward += 0.1  # Survival reward
+            episode_reward += 0.1
             
-            # Print info every 100 steps
             if episode_steps % 100 == 0:
                 print(f"Steps: {episode_steps}, Reward: {episode_reward:.2f}, " +
-                      f"Kills: {zombies_killed}, Health: {player.health}")
+                      f"Kills: {game.zombies_killed}, Health: {game.player.health}, " +
+                      f"Wave: {game.wave}, Weapon: {game.player.weapon}")
         
         # Draw everything with FULL ASSETS
         if background_img:
@@ -823,20 +928,20 @@ def main_agent_mode(model_path: str):
         else:
             screen.fill(BG_COLOR)
         
-        player.draw(screen)
-        for zombie in zombies:
+        game.player.draw(screen)
+        for zombie in game.zombies:
             zombie.draw(screen)
-        for bullet in bullets:
+        for bullet in game.bullets:
             bullet.draw(screen)
-        for knife in knife_attacks:
+        for knife in game.knife_attacks:
             knife.draw(screen)
-        for pickup in pickups:
+        for pickup in game.pickups:
             pickup.draw(screen)
         
-        draw_ui(screen, player, wave, zombies_killed)
+        draw_ui(screen, game.player, game.wave, game.zombies_killed)
         
-        if game_over:
-            draw_game_over(screen, player.score, zombies_killed, wave)
+        if game.game_over:
+            draw_game_over(screen, game.player.score, game.zombies_killed, game.wave)
         
         pygame.display.flip()
         clock.tick(FPS)
@@ -860,6 +965,7 @@ def main():
     elif args.mode == 'agent':
         print("Starting in AGENT mode (PPO control)")
         main_agent_mode(args.model)
+
 
 if __name__ == "__main__":
     main()

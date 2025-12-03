@@ -28,9 +28,10 @@ class Logger:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log_file = os.path.join(log_dir, f"training_{timestamp}.log")
         
-        # Write header
+        # Write header - ENHANCED with weapon tracking
         with open(self.log_file, 'w') as f:
             f.write("timestep,episode,episode_reward,episode_length,zombies_killed,wave," +
+                   "has_machinegun,mg_ammo,weapon," +
                    "policy_loss,value_loss,entropy_loss,total_loss,clip_fraction,approx_kl," +
                    "fps,elapsed_time\n")
     
@@ -39,6 +40,7 @@ class Logger:
         with open(self.log_file, 'a') as f:
             line = ','.join([str(data.get(key, '')) for key in [
                 'timestep', 'episode', 'episode_reward', 'episode_length', 'zombies_killed', 'wave',
+                'has_machinegun', 'mg_ammo', 'weapon',
                 'policy_loss', 'value_loss', 'entropy_loss', 'total_loss', 'clip_fraction',
                 'approx_kl', 'fps', 'elapsed_time'
             ]])
@@ -50,6 +52,7 @@ class Logger:
         print(f"Timestep: {data.get('timestep', 0):,} | Episode: {data.get('episode', 0)}")
         print(f"Episode Reward: {data.get('episode_reward', 0):.2f} | Length: {data.get('episode_length', 0)}")
         print(f"Zombies Killed: {data.get('zombies_killed', 0)} | Wave: {data.get('wave', 1)}")
+        print(f"Weapon: {data.get('weapon', 'pistol')} | MG Ammo: {data.get('mg_ammo', 0)} | Has MG: {data.get('has_machinegun', False)}")
         
         if 'policy_loss' in data:
             print(f"\nTraining Stats:")
@@ -143,7 +146,7 @@ def train_ppo(
             if done:
                 episode_count += 1
                 
-                # Prepare log data
+                # Prepare log data - ENHANCED with weapon tracking
                 log_data = {
                     'timestep': agent.total_timesteps,
                     'episode': episode_count,
@@ -151,6 +154,9 @@ def train_ppo(
                     'episode_length': episode_length,
                     'zombies_killed': info.get('zombies_killed', 0),
                     'wave': info.get('wave', 1),
+                    'has_machinegun': info.get('has_machinegun', False),
+                    'mg_ammo': info.get('machinegun_ammo', 0),
+                    'weapon': info.get('current_weapon', 'pistol'),
                     'fps': timesteps_since_log / (time.time() - last_log_time),
                     'elapsed_time': time.time() - start_time
                 }
