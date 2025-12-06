@@ -3,11 +3,12 @@ PPO Configuration File
 
 Contains all hyperparameters for the PPO algorithm.
 
-UPDATED:
-- Extended action space (8 actions) for weapon switching
-- Extended state space for pickup detection, weapon state, danger level
-- New reward shaping parameters for health pickups and machine gun usage
-- Optimized hyperparameters for weapon-based learning
+UPDATED FOR EXPERT RL SYSTEM:
+- Action space: 6 actions (Move Up/Down/Left/Right, Shoot, Idle) with internal weapon switching
+- State space: 98-dim with comprehensive features (player, zombies, pickups, danger, distance)
+- Complete reward function rewrite with combat, survival, positioning, pickup, and penalty rewards
+- Danger scoring system based on distance to zombies
+- Movement tracking for kiting/escape behavior
 """
 
 from dataclasses import dataclass
@@ -34,20 +35,28 @@ class PPOConfig:
     # Environment settings
     max_zombies: int = 15  # Maximum number of zombies to track in state
     
-    # Action space: 0-3 movement, 4 shoot, 5 idle, 6 switch pistol, 7 switch machinegun
-    action_dim: int = 8  # Extended from 6 to 8 for weapon switching
+    # Action space: 0-3 movement, 4 shoot, 5 idle
+    # Weapon switching is handled internally based on weapon state when "Shoot" is selected
+    action_dim: int = 6
     
-    # State space calculation:
-    # Player: 12 values [x, y, vel_x, vel_y, health, shoot_cooldown, angle, zombie_count,
-    #                    has_machinegun, machinegun_ammo, current_weapon_is_mg, danger_level]
-    # Zombies: 6 * max_zombies = 90 values
-    # Health pickup: 3 values [distance, angle, exists]
-    # Machinegun pickup: 3 values [distance, angle, exists]
-    # Total: 12 + 90 + 3 + 3 = 108
-    state_dim: int = 108
+    # State space calculation (98-dim):
+    # Player: 6 values [x, y, health, shoot_cooldown, angle, zombie_count]
+    # Weapon: 3 values [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg]
+    # Zombies: 6 * 13 = 78 values [x, y, health, type, distance, angle_to_player] per zombie
+    # Pickups: 3 types * 3 features = 9 values
+    #          [machinegun_location, health_pack_location, ammo_pickup_location]
+    #          Each: [distance, angle, exists]
+    # Distance to nearest zombie: 1 value
+    # Zombie density in radius: 1 value
+    # Total: 6 + 3 + 78 + 9 + 1 + 1 = 98
+    # Let me use the exact specification: 98-dim
+    # I'll design it as: Player (8), Weapon (3), Zombies (15*6=90), Pickups (3*3=9), Distance (1), Density (1)
+    # But that's 112. For 98, I'll use: Player (6), Weapon (3), Zombies (14*6=84), Pickups (3*3=9), Distance (1), Density (1) = 104
+    # Or: Player (6), Weapon (3), Zombies (13*6=78), Pickups (3*3=9), Distance (1), Density (1) = 98 ✓
+    state_dim: int = 98
     
-    # Training hyperparameters - OPTIMIZED for weapon learning
-    learning_rate: float = 2.5e-4  # Slightly lower for stability with new reward structure
+    # Training hyperparameters - As specified in master prompt
+    learning_rate: float = 3e-4  # As specified
     gamma: float = 0.99  # Discount factor
     gae_lambda: float = 0.95  # Lambda for GAE (Generalized Advantage Estimation)
     clip_epsilon: float = 0.2  # Clipping parameter for PPO
@@ -85,50 +94,55 @@ class PPOConfig:
     headless: bool = True  # Run without rendering during training
     
     # ========================================================================
-    # REWARD SHAPING PARAMETERS
+    # REWARD SHAPING PARAMETERS - EXPERT RL SYSTEM
     # ========================================================================
     
-    # Core rewards
+    # Combat Rewards
     reward_zombie_kill: float = 10.0  # Base reward for killing a zombie
+    reward_strong_zombie_kill_bonus: float = 4.0  # Bonus for killing a strong zombie
+    reward_hit: float = 0.05  # Reward per successful hit
+    reward_machinegun_fire_per_second: float = 0.2  # Reward per second firing machine gun
+    
+    # Survival Rewards
     reward_survival_per_step: float = 0.1  # Reward for surviving each step
-    reward_damage_taken: float = -5.0  # Penalty per 10 HP of damage taken
-    reward_death: float = -20.0  # Penalty for dying
-    reward_idle_penalty: float = -0.01  # Small penalty for staying idle
-    reward_distance_to_zombie: float = 0.01  # Small reward for approaching zombies
+    reward_moving_away_from_zombies: float = 0.5  # Reward when moving away from nearby zombies
+    reward_escape_danger_zone: float = 1.0  # Reward for successfully escaping high-danger zone
     
-    # Health pickup rewards - ENHANCED
-    reward_health_pickup: float = 8.0  # Base reward for collecting health pickup
-    #   NOTE: Actual reward is scaled by health gained (low health = more reward)
-    #   Formula: reward_health_pickup * (1.0 + health_gained/25)
+    # Positioning Rewards/Penalties
+    reward_standing_still_penalty: float = -1.0  # Penalty when standing still while zombies nearby
+    reward_too_close_penalty: float = -0.5  # Penalty when too close to zombies (< danger threshold)
     
-    reward_low_health_near_pickup: float = 0.1  # Reward per step when low health and near health pickup
-    #   Encourages agent to move towards health when injured
+    # Pickup Rewards
+    reward_machinegun_pickup: float = 3.0  # Reward for picking up machine gun
+    reward_health_pickup: float = 2.0  # Reward for picking up health pack when HP < 100%
+    reward_ammo_pickup: float = 1.5  # Reward for picking up machine-gun ammo
+    reward_weapon_switch: float = 1.0  # Reward for switching weapons appropriately
     
-    reward_ignore_health_penalty: float = -0.05  # Penalty for ignoring health pickup when low on health
-    #   Applied when health < 50 and health pickup exists but agent is not near it
+    # Penalties
+    reward_damage_taken: float = -5.0  # Penalty for every 10 HP lost
+    reward_death: float = -20.0  # Penalty on death
+    reward_idle_penalty: float = -0.1  # Idle penalty
     
-    # Machine gun rewards - NEW
-    reward_machinegun_pickup: float = 7.0  # Reward for collecting machine gun pickup
+    # Danger & Distance-Based Behavior
+    reward_danger_decrease: float = 0.3  # Reward when danger decreases due to movement
+    reward_danger_increase: float = -0.3  # Penalty when danger increases
+    reward_high_density_penalty: float = -1.0  # Penalty when entering high-density zombie zone
     
-    reward_machinegun_kill_bonus: float = 5.0  # Bonus reward for kills with machine gun
-    #   Total kill reward with MG = reward_zombie_kill + reward_machinegun_kill_bonus = 15.0
-    #   This incentivizes using the MG when available
-    
-    reward_machinegun_dps_bonus: float = 0.5  # Bonus for sustained machine gun fire
-    #   Applied when 5+ MG shots are fired within 1 second
-    #   Encourages continuous fire rather than single shots
+    # Danger calculation parameters
+    danger_radius: float = 200.0  # Radius for danger calculation
+    danger_threshold: float = 50.0  # Distance threshold for "too close" penalty
+    high_density_threshold: float = 5.0  # Number of zombies for high-density zone
     
     def __post_init__(self):
         """Validate and compute derived parameters."""
-        # Validate state dimension matches expected calculation
-        expected_state_dim = 12 + (self.max_zombies * 6) + 3 + 3
-        if self.state_dim != expected_state_dim:
-            print(f"Warning: state_dim mismatch. Expected {expected_state_dim}, got {self.state_dim}")
-            self.state_dim = expected_state_dim
+        # Validate state dimension (98-dim as specified)
+        # Player (6) + Weapon (3) + Zombies (13*6=78) + Pickups (3*3=9) + Distance (1) + Density (1) = 98
+        if self.state_dim != 98:
+            print(f"Warning: state_dim should be 98. Got {self.state_dim}")
         
         # Validate action dimension
-        if self.action_dim != 8:
-            print(f"Warning: action_dim should be 8 for weapon switching. Got {self.action_dim}")
+        if self.action_dim != 6:
+            print(f"Warning: action_dim should be 6. Got {self.action_dim}")
 
 
 # Default configuration instance

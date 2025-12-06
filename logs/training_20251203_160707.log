@@ -1,0 +1,1 @@
+timestep,episode,episode_reward,episode_length,zombies_killed,wave,has_machinegun,mg_ammo,weapon,policy_loss,value_loss,entropy_loss,total_loss,clip_fraction,approx_kl,fps,elapsed_time
