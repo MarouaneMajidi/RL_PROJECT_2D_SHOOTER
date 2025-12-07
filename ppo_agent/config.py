@@ -42,20 +42,23 @@ class PPOConfig:
     action_space_shape: Tuple[int, ...] = (5, 2)  # Multi-discrete: [movement, shoot]
     action_dim: int = 5 * 2  # Total combinations (for compatibility, but we use multi-discrete)
     
-    # Enhanced state space calculation:
+    # Enhanced state space calculation (129-dim):
     # Player: 6 values [x, y, health, shoot_cooldown, angle, zombie_count]
     # Weapon: 3 values [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg]
-    # Zombies: 6 * 13 = 78 values [x, y, health, type, distance, angle_to_player] per zombie
+    # Zombies: 7 * 13 = 91 values [x, y, health, type, distance, angle_to_player, in_bounds] per zombie
+    #   * in_bounds flag helps agent distinguish valid targets from off-screen zombies
     # Pickups (enhanced with directional info):
     #   Machinegun: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
     #   Health: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
     #   Ammo: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
     #   Total pickups: 18 values
-    # Distance to nearest zombie: 1 value
-    # Zombie density in radius: 1 value
+    # Distance to nearest IN-BOUNDS zombie: 1 value
+    # Zombie density in radius (in-bounds only): 1 value
     # Movement direction (last action): 4 values [up, down, left, right]
-    # Total: 6 + 3 + 78 + 18 + 1 + 1 + 4 = 111
-    state_dim: int = 111
+    # Pickup urgency signals: 3 values [health_urgency, machinegun_urgency, ammo_urgency]
+    # Zombie counts: 2 values [in_bounds_count_normalized, total_count_normalized]
+    # Total: 6 + 3 + 91 + 18 + 1 + 1 + 4 + 3 + 2 = 129
+    state_dim: int = 129
     
     # Training hyperparameters - Optimized for complex behavior learning
     learning_rate: float = 3e-4
@@ -120,16 +123,22 @@ class PPOConfig:
     reward_ammo_pickup: float = 2.0  # Increased
     reward_weapon_switch: float = 1.0
     
-    # NEW: Directional pickup rewards (dense shaping)
-    reward_moving_toward_machinegun: float = 0.2  # Per step when moving closer
-    reward_moving_toward_health: float = 0.15  # Per step when moving closer
-    reward_moving_toward_ammo: float = 0.1  # Per step when moving closer
-    reward_pickup_proximity: float = 0.05  # Bonus when within pickup range
+    # NEW: Directional pickup rewards (dense shaping, urgency-weighted)
+    reward_moving_toward_machinegun: float = 0.3  # Increased - machinegun is critical
+    reward_moving_toward_health: float = 0.2  # Increased - health extends survival
+    reward_moving_toward_ammo: float = 0.15  # Increased - ammo maintains combat capability
+    reward_pickup_proximity: float = 0.1  # Increased - being near pickups is good
+    
+    # NEW: Strategic pickup collection rewards (context-aware)
+    reward_strategic_health_pickup: float = 2.0  # Bonus for collecting health when low
+    reward_strategic_ammo_pickup: float = 1.5  # Bonus for collecting ammo when low on ammo
+    reward_strategic_machinegun_pickup: float = 3.0  # Bonus for collecting machinegun (always strategic)
     
     # NEW: Combat behavior rewards
     reward_shooting_while_moving: float = 0.3  # Reward for shooting while moving
     reward_shooting_at_enemies: float = 0.2  # Reward when shooting with enemies in range
     penalty_running_away_without_shooting: float = -0.5  # Penalty for fleeing without fighting
+    penalty_shooting_at_out_of_bounds: float = -0.3  # Penalty for shooting when no in-bounds zombies
     
     # Penalties
     reward_damage_taken: float = -5.0
@@ -153,8 +162,8 @@ class PPOConfig:
     def __post_init__(self):
         """Validate and compute derived parameters."""
         # Validate state dimension
-        if self.state_dim != 111:
-            print(f"Warning: state_dim should be 111. Got {self.state_dim}")
+        if self.state_dim != 129:
+            print(f"Warning: state_dim should be 129. Got {self.state_dim}")
         
         # Validate action space
         if len(self.action_space_shape) != 2:

@@ -679,18 +679,36 @@ def main_agent_mode(model_path: str):
     episode_steps = 0
     episodes = 0
     
+    def is_zombie_in_bounds(zombie):
+        """Check if zombie is within playable area."""
+        return (0 <= zombie.x <= SCREEN_WIDTH and 0 <= zombie.y <= SCREEN_HEIGHT)
+    
+    def get_in_bounds_zombies():
+        """Get only zombies within playable area."""
+        return [z for z in game.zombies if is_zombie_in_bounds(z)]
+    
+    def compute_pickup_urgency():
+        """Compute urgency scores for each pickup type."""
+        urgency = {
+            'health': 1.0 - (game.player.health / 100.0),  # Higher when health is low
+            'machinegun': 1.0 if not game.player.has_machinegun else 0.0,  # High if don't have it
+            'ammo': (1.0 - (game.player.machinegun_ammo / 100.0)) if game.player.has_machinegun else 0.0
+        }
+        return urgency
+    
     def get_agent_state():
-        """Extract state for the agent matching the new 111-dim env.py format with enhanced features."""
+        """Extract state for the agent matching the new 129-dim env.py format with enhanced features."""
         state = []
         
         # Player state (6 values): [x, y, health, shoot_cooldown, angle, zombie_count]
+        in_bounds_zombies = get_in_bounds_zombies()
         state.extend([
             game.player.x / SCREEN_WIDTH,
             game.player.y / SCREEN_HEIGHT,
             game.player.health / 100.0,
             game.player.shoot_cooldown / PISTOL_COOLDOWN,
             game.player.angle / 360.0,
-            min(len(game.zombies), 13) / 13.0  # Normalize zombie count (max 13 for 98-dim)
+            min(len(in_bounds_zombies), 13) / 13.0  # Use in-bounds count
         ])
         
         # Weapon state (3 values): [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg]
@@ -700,11 +718,17 @@ def main_agent_mode(model_path: str):
             1.0 if game.player.weapon == "machinegun" else 0.0
         ])
         
-        # Zombie states (sort by distance, take closest 13 zombies for 98-dim state)
-        zombies_sorted = sorted(game.zombies, 
-                               key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y))
+        # Zombie states (prioritize in-bounds, sort by distance, take closest 13)
+        in_bounds_zombies = get_in_bounds_zombies()
+        out_of_bounds_zombies = [z for z in game.zombies if not is_zombie_in_bounds(z)]
         
-        max_zombies_for_state = 13  # To get exactly 98-dim
+        # Prioritize in-bounds zombies
+        zombies_sorted = (sorted(in_bounds_zombies, 
+                                key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y)) +
+                         sorted(out_of_bounds_zombies,
+                                key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y)))
+        
+        max_zombies_for_state = 13
         for i in range(max_zombies_for_state):
             if i < len(zombies_sorted):
                 zombie = zombies_sorted[i]
@@ -712,6 +736,7 @@ def main_agent_mode(model_path: str):
                 dx = zombie.x - game.player.x
                 dy = zombie.y - game.player.y
                 angle_to_zombie = math.degrees(math.atan2(-dy, dx)) % 360
+                is_in_bounds = 1.0 if is_zombie_in_bounds(zombie) else 0.0
                 
                 state.extend([
                     zombie.x / SCREEN_WIDTH,
@@ -719,11 +744,12 @@ def main_agent_mode(model_path: str):
                     zombie.health / ZOMBIE_STRONG_HEALTH,
                     1.0 if zombie.zombie_type == 'strong' else 0.0,
                     min(distance / 1000.0, 1.0),
-                    angle_to_zombie / 360.0
+                    angle_to_zombie / 360.0,
+                    is_in_bounds  # NEW: in_bounds flag
                 ])
             else:
                 # Padding for empty zombie slots
-                state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+                state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0])
         
         # Pickup info (enhanced with directional info): 18 values total
         # Machinegun pickup: [distance, angle, exists, dx_normalized, dy_normalized, in_range]
@@ -786,17 +812,18 @@ def main_agent_mode(model_path: str):
         else:
             state.extend([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # No ammo pickup
         
-        # Distance to nearest zombie (1 value)
-        if len(game.zombies) > 0:
+        # Distance to nearest IN-BOUNDS zombie (1 value)
+        in_bounds_zombies = get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
             min_dist = min([math.hypot(game.player.x - z.x, game.player.y - z.y) 
-                           for z in game.zombies])
+                           for z in in_bounds_zombies])
             state.append(min(min_dist / 1000.0, 1.0))  # Normalize
         else:
-            state.append(1.0)  # No zombies, max distance
+            state.append(1.0)  # No in-bounds zombies, max distance
         
-        # Zombie density in radius (1 value)
+        # Zombie density in radius (in-bounds only) (1 value)
         radius = 200.0  # Danger radius
-        density = sum(1 for z in game.zombies 
+        density = sum(1 for z in in_bounds_zombies 
                      if math.hypot(game.player.x - z.x, game.player.y - z.y) < radius)
         state.append(min(density / 10.0, 1.0))  # Normalize (max 10 zombies)
         
@@ -804,8 +831,24 @@ def main_agent_mode(model_path: str):
         # For main.py, we'll use zeros (not tracked in main game loop)
         state.extend([0.0, 0.0, 0.0, 0.0])
         
+        # Pickup urgency signals (3 values): [health_urgency, machinegun_urgency, ammo_urgency]
+        urgency = compute_pickup_urgency()
+        state.extend([
+            urgency['health'],
+            urgency['machinegun'],
+            urgency['ammo']
+        ])
+        
+        # Zombie counts (2 values): [in_bounds_count_normalized, total_count_normalized]
+        in_bounds_count = len(in_bounds_zombies)
+        total_count = len(game.zombies)
+        state.extend([
+            min(in_bounds_count / 15.0, 1.0),
+            min(total_count / 20.0, 1.0)
+        ])
+        
         # Verify state dimension
-        assert len(state) == 111, f"State dimension mismatch: expected 111, got {len(state)}"
+        assert len(state) == 129, f"State dimension mismatch: expected 129, got {len(state)}"
         
         return np.array(state, dtype=np.float32)
     
@@ -884,12 +927,15 @@ def main_agent_mode(model_path: str):
             if game.player.shoot_cooldown > 0:
                 game.player.shoot_cooldown -= 1
             
-            # Update player angle to nearest zombie
-            if len(game.zombies) > 0:
-                nearest_zombie = min(game.zombies, key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y))
+            # Update player angle to nearest IN-BOUNDS zombie only
+            in_bounds_zombies = get_in_bounds_zombies()
+            if len(in_bounds_zombies) > 0:
+                nearest_zombie = min(in_bounds_zombies, 
+                                   key=lambda z: math.hypot(game.player.x - z.x, game.player.y - z.y))
                 dx = nearest_zombie.x - game.player.x
                 dy = nearest_zombie.y - game.player.y
                 game.player.angle = math.degrees(math.atan2(-dy, dx)) % 360
+            # If no in-bounds zombies, keep previous angle
             
             # Update pickups
             pickups_to_remove = []

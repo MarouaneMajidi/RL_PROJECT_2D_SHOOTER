@@ -250,10 +250,11 @@ class ZombieShooterEnv:
             # Clean old entries (keep last 60 frames = 1 second)
             self.mg_fire_time = [t for t in self.mg_fire_time if self.episode_steps - t < 60]
         
-        # Check if enemies are in shooting range
+        # Check if enemies are in shooting range (only in-bounds zombies)
         self.enemies_in_range = False
-        if len(self.zombies) > 0:
-            nearest_zombie = min(self.zombies, 
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
+            nearest_zombie = min(in_bounds_zombies, 
                                key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y']))
             dist_to_nearest = self._distance(self.player['x'], self.player['y'], 
                                             nearest_zombie['x'], nearest_zombie['y'])
@@ -278,6 +279,10 @@ class ZombieShooterEnv:
         if self.was_moving and not self.was_shooting and self.enemies_in_range:
             # Running away without shooting
             reward += self.config.penalty_running_away_without_shooting
+        
+        # Penalty for shooting when no in-bounds zombies (wasting ammo on off-screen targets)
+        if self.was_shooting and len(self._get_in_bounds_zombies()) == 0:
+            reward += self.config.penalty_shooting_at_out_of_bounds
         
         # Reward for weapon switching appropriately
         if weapon_switched:
@@ -325,16 +330,17 @@ class ZombieShooterEnv:
         current_pos = (self.player['x'], self.player['y'])
         if current_pos == self.last_player_pos:
             self.idle_frames += 1
-            reward += self.config.reward_idle_penalty
+                reward += self.config.reward_idle_penalty
         else:
             self.idle_frames = 0
         self.last_player_pos = current_pos
         
-        # 4. POSITIONING REWARDS/PENALTIES
-        if len(self.zombies) > 0:
-            # Find nearest zombie
+        # 4. POSITIONING REWARDS/PENALTIES (only consider in-bounds zombies)
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
+            # Find nearest in-bounds zombie
             min_dist = min([self._distance(self.player['x'], self.player['y'], z['x'], z['y']) 
-                           for z in self.zombies])
+                           for z in in_bounds_zombies])
             
             # Penalty for standing still while zombies nearby
             if current_pos == self.last_player_pos and min_dist < 200:
@@ -361,10 +367,10 @@ class ZombieShooterEnv:
         if zombie_density >= self.config.high_density_threshold:
             reward += self.config.reward_high_density_penalty
         
-        # Reward for moving away from nearby zombies
-        if len(self.zombies) > 0 and current_pos != self.last_player_pos:
-            # Check if we're moving away from nearest zombie
-            nearest_zombie = min(self.zombies, 
+        # Reward for moving away from nearby zombies (only in-bounds)
+        if len(in_bounds_zombies) > 0 and current_pos != self.last_player_pos:
+            # Check if we're moving away from nearest in-bounds zombie
+            nearest_zombie = min(in_bounds_zombies, 
                                key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y']))
             dist_to_nearest = self._distance(self.player['x'], self.player['y'], 
                                             nearest_zombie['x'], nearest_zombie['y'])
@@ -464,13 +470,15 @@ class ZombieShooterEnv:
         if self.player['shoot_cooldown'] > 0:
             self.player['shoot_cooldown'] -= 1
         
-        # Update angle to nearest zombie
-        if len(self.zombies) > 0:
-            nearest_zombie = min(self.zombies, 
+        # Update angle to nearest IN-BOUNDS zombie only
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
+            nearest_zombie = min(in_bounds_zombies, 
                                 key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y']))
             dx = nearest_zombie['x'] - self.player['x']
             dy = nearest_zombie['y'] - self.player['y']
             self.player['angle'] = math.degrees(math.atan2(-dy, dx)) % 360
+        # If no in-bounds zombies, keep previous angle
         
         return shot_weapon
     
@@ -526,13 +534,17 @@ class ZombieShooterEnv:
         if self.player['shoot_cooldown'] > 0:
             self.player['shoot_cooldown'] -= 1
         
-        # Update angle to nearest zombie
-        if len(self.zombies) > 0:
-            nearest_zombie = min(self.zombies, 
+        # Update angle to nearest IN-BOUNDS zombie only
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
+            nearest_zombie = min(in_bounds_zombies, 
                                 key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y']))
             dx = nearest_zombie['x'] - self.player['x']
             dy = nearest_zombie['y'] - self.player['y']
             self.player['angle'] = math.degrees(math.atan2(-dy, dx)) % 360
+        else:
+            # No in-bounds zombies, don't update angle
+            pass
         
         return shot_weapon
     
@@ -666,13 +678,14 @@ class ZombieShooterEnv:
     
     def _update_pickups(self) -> float:
         """
-        Update pickups and check collisions.
+        Update pickups and check collisions with strategic reward scaling.
         
         Returns:
-            Pickup reward for this frame
+            Pickup reward for this frame (scaled by urgency/need)
         """
         pickups_to_remove = []
         pickup_reward = 0.0
+        urgency = self._compute_pickup_urgency()
         
         for pickup in self.pickups:
             pickup['lifetime'] -= 1
@@ -680,22 +693,46 @@ class ZombieShooterEnv:
                 pickups_to_remove.append(pickup)
             elif self._distance(pickup['x'], pickup['y'], self.player['x'], self.player['y']) < self.config.pickup_collection_radius:
                 if pickup['type'] == 'health':
-                    # Only reward if health is below 100%
+                    # Strategic reward: higher when health is low (more urgent)
                     if self.player['health'] < 100:
-                        health_before = self.player['health']
-                        self.player['health'] = min(100, self.player['health'] + self.HEALTH_PICKUP_AMOUNT)
-                        pickup_reward += self.config.reward_health_pickup
+                    health_before = self.player['health']
+                        health_gained = min(100 - health_before, self.HEALTH_PICKUP_AMOUNT)
+                    self.player['health'] = min(100, self.player['health'] + self.HEALTH_PICKUP_AMOUNT)
+                        
+                        # Scale reward by urgency (low health = higher reward)
+                        base_reward = self.config.reward_health_pickup
+                        urgency_multiplier = 1.0 + urgency['health'] * 2.0  # 1x to 3x
+                        pickup_reward += base_reward * urgency_multiplier
+                        
+                        # Strategic bonus when health is low
+                        if urgency['health'] > 0.5:  # More than 50% urgency
+                            pickup_reward += self.config.reward_strategic_health_pickup
                     
                 elif pickup['type'] == 'machinegun':
+                    # Machinegun is always valuable (dramatically increases lethality)
                     self.player['has_machinegun'] = True
                     self.player['machinegun_ammo'] += self.MACHINEGUN_PICKUP_AMMO
-                    pickup_reward += self.config.reward_machinegun_pickup
+                    
+                    # Higher reward if we don't have it (urgency = 1.0)
+                    base_reward = self.config.reward_machinegun_pickup
+                    urgency_multiplier = 1.0 + urgency['machinegun'] * 1.5  # 1x to 2.5x
+                    pickup_reward += base_reward * urgency_multiplier
+                    pickup_reward += self.config.reward_strategic_machinegun_pickup  # Strategic bonus
                     
                 elif pickup['type'] == 'ammo':
-                    # Ammo pickup for machine gun
+                    # Ammo pickup for machine gun (only valuable if have machinegun)
                     if self.player['has_machinegun']:
                         self.player['machinegun_ammo'] += self.AMMO_PICKUP_AMOUNT
-                        pickup_reward += self.config.reward_ammo_pickup
+                        
+                        # Scale reward by ammo urgency (low ammo = higher reward)
+                        base_reward = self.config.reward_ammo_pickup
+                        urgency_multiplier = 1.0 + urgency['ammo'] * 1.5  # 1x to 2.5x
+                        pickup_reward += base_reward * urgency_multiplier
+                        
+                        # Strategic bonus when ammo is low
+                        if urgency['ammo'] > 0.5:  # More than 50% urgency
+                            pickup_reward += self.config.reward_strategic_ammo_pickup
+                    # No reward if don't have machinegun (urgency = 0.0)
                     
                 pickups_to_remove.append(pickup)
         
@@ -715,7 +752,7 @@ class ZombieShooterEnv:
     
     def _compute_danger_score(self) -> float:
         """
-        Compute danger score based on distance to zombies.
+        Compute danger score based on distance to IN-BOUNDS zombies only.
         Formula: danger = Σ (1 / distance_to_zombie) for zombies within radius R
         
         Returns:
@@ -723,8 +760,9 @@ class ZombieShooterEnv:
         """
         danger = 0.0
         radius = self.config.danger_radius
+        in_bounds_zombies = self._get_in_bounds_zombies()
         
-        for zombie in self.zombies:
+        for zombie in in_bounds_zombies:
             dist = self._distance(self.player['x'], self.player['y'], zombie['x'], zombie['y'])
             if dist < radius and dist > 0:
                 danger += 1.0 / max(dist, 1.0)  # Avoid division by zero
@@ -733,15 +771,16 @@ class ZombieShooterEnv:
     
     def _compute_zombie_density(self) -> float:
         """
-        Compute zombie density in a radius around the player.
+        Compute zombie density in a radius around the player (only in-bounds zombies).
         
         Returns:
-            Number of zombies within danger radius
+            Number of in-bounds zombies within danger radius
         """
         radius = self.config.danger_radius
         count = 0
+        in_bounds_zombies = self._get_in_bounds_zombies()
         
-        for zombie in self.zombies:
+        for zombie in in_bounds_zombies:
             dist = self._distance(self.player['x'], self.player['y'], zombie['x'], zombie['y'])
             if dist < radius:
                 count += 1
@@ -770,12 +809,13 @@ class ZombieShooterEnv:
     
     def _compute_directional_pickup_rewards(self) -> float:
         """
-        Compute directional rewards for moving toward pickups.
+        Compute directional rewards for moving toward pickups with urgency weighting.
         
         Returns:
             Total directional pickup reward
         """
         reward = 0.0
+        urgency = self._compute_pickup_urgency()
         
         # Check each pickup type
         for pickup_type in ['machinegun', 'health', 'ammo']:
@@ -791,20 +831,80 @@ class ZombieShooterEnv:
             if key in self.previous_pickup_distances:
                 prev_dist = self.previous_pickup_distances[key]
                 
-                # Reward moving closer
+                # Reward moving closer, weighted by urgency
                 if current_dist < prev_dist:
+                    base_reward = 0.0
                     if pickup_type == 'machinegun':
-                        reward += self.config.reward_moving_toward_machinegun
+                        base_reward = self.config.reward_moving_toward_machinegun
                     elif pickup_type == 'health':
-                        reward += self.config.reward_moving_toward_health
+                        base_reward = self.config.reward_moving_toward_health
                     elif pickup_type == 'ammo':
-                        reward += self.config.reward_moving_toward_ammo
+                        base_reward = self.config.reward_moving_toward_ammo
+                    
+                    # Scale reward by urgency (more urgent = higher reward)
+                    urgency_weight = urgency[pickup_type]
+                    reward += base_reward * (1.0 + urgency_weight * 2.0)  # 1x to 3x multiplier
                 
-                # Bonus for being in pickup range
+                # Bonus for being in pickup range, weighted by urgency
                 if current_dist < self.config.pickup_detection_range:
-                    reward += self.config.reward_pickup_proximity
+                    proximity_reward = self.config.reward_pickup_proximity * (1.0 + urgency[pickup_type])
+                    reward += proximity_reward
         
         return reward
+    
+    def _is_zombie_in_bounds(self, zombie: Dict) -> bool:
+        """
+        Check if a zombie is within the playable area.
+        
+        Args:
+            zombie: Zombie dictionary with 'x' and 'y' keys
+        
+        Returns:
+            True if zombie is in bounds, False otherwise
+        """
+        return (0 <= zombie['x'] <= self.SCREEN_WIDTH and 
+                0 <= zombie['y'] <= self.SCREEN_HEIGHT)
+    
+    def _get_in_bounds_zombies(self) -> List[Dict]:
+        """
+        Get only zombies that are within the playable area.
+        
+        Returns:
+            List of in-bounds zombies
+        """
+        return [z for z in self.zombies if self._is_zombie_in_bounds(z)]
+    
+    def _compute_pickup_urgency(self) -> Dict[str, float]:
+        """
+        Compute urgency scores for each pickup type based on current state.
+        
+        Returns:
+            Dictionary with urgency scores (0.0 to 1.0) for each pickup type
+        """
+        urgency = {
+            'health': 0.0,
+            'machinegun': 0.0,
+            'ammo': 0.0
+        }
+        
+        # Health urgency: increases as health decreases
+        health_ratio = self.player['health'] / 100.0
+        urgency['health'] = 1.0 - health_ratio  # 1.0 when health = 0, 0.0 when health = 100
+        
+        # Machinegun urgency: high if don't have it, low if have it
+        if not self.player['has_machinegun']:
+            urgency['machinegun'] = 1.0  # Critical: need machinegun
+        else:
+            urgency['machinegun'] = 0.0  # Already have it
+        
+        # Ammo urgency: increases as ammo decreases (only if have machinegun)
+        if self.player['has_machinegun']:
+            ammo_ratio = self.player['machinegun_ammo'] / 100.0
+            urgency['ammo'] = 1.0 - ammo_ratio  # 1.0 when ammo = 0, 0.0 when ammo = 100
+        else:
+            urgency['ammo'] = 0.0  # No urgency if don't have machinegun
+        
+        return urgency
     
     def _update_pickup_distances(self):
         """Update pickup distances for next step's directional rewards."""
@@ -824,19 +924,23 @@ class ZombieShooterEnv:
         """
         Get the current state representation (111-dim with enhanced features).
         
-        Enhanced State Space (111-dim):
+        Enhanced State Space (129-dim):
         - Player: [x, y, health, shoot_cooldown, angle, zombie_count] (6 values)
         - Weapon: [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg] (3 values)
-        - Zombies (up to 13): [x, y, health, type, distance, angle_to_player] per zombie (78 values)
+        - Zombies (up to 13): [x, y, health, type, distance, angle_to_player, in_bounds] per zombie (91 values)
+          * Prioritizes in-bounds zombies in state encoding
+          * in_bounds flag helps agent distinguish valid targets
         - Pickups (enhanced with directional info):
           Machinegun: [distance, angle, exists, dx_normalized, dy_normalized, in_range] (6 values)
           Health: [distance, angle, exists, dx_normalized, dy_normalized, in_range] (6 values)
           Ammo: [distance, angle, exists, dx_normalized, dy_normalized, in_range] (6 values)
           Total: 18 values
-        - Distance to nearest zombie: 1 value
-        - Zombie density in radius: 1 value
+        - Distance to nearest IN-BOUNDS zombie: 1 value
+        - Zombie density in radius (in-bounds only): 1 value
         - Movement direction (last action): [up, down, left, right] (4 values)
-        Total: 6 + 3 + 78 + 18 + 1 + 1 + 4 = 111
+        - Pickup urgency signals: [health_urgency, machinegun_urgency, ammo_urgency] (3 values)
+        - Zombie counts: [in_bounds_count_normalized, total_count_normalized] (2 values)
+        Total: 6 + 3 + 91 + 18 + 1 + 1 + 4 + 3 + 2 = 129
         
         Returns:
             State vector as numpy array (111-dim)
@@ -844,13 +948,15 @@ class ZombieShooterEnv:
         state = []
         
         # Player state (6 values): [x, y, health, shoot_cooldown, angle, zombie_count]
+        # Use in-bounds zombie count for more accurate representation
+        in_bounds_count = len(self._get_in_bounds_zombies())
         state.extend([
             self.player['x'] / self.SCREEN_WIDTH,  # Normalize
             self.player['y'] / self.SCREEN_HEIGHT,
             self.player['health'] / 100.0,
             self.player['shoot_cooldown'] / self.PISTOL_COOLDOWN,
             self.player['angle'] / 360.0,
-            min(len(self.zombies), 13) / 13.0  # Normalize zombie count (max 13 for 98-dim)
+            min(in_bounds_count, 13) / 13.0  # Normalize in-bounds zombie count
         ])
         
         # Weapon state (3 values): [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg]
@@ -860,16 +966,24 @@ class ZombieShooterEnv:
             1.0 if self.player['weapon'] == 'machinegun' else 0.0
         ])
         
-        # Zombie states (sort by distance, take closest 13 zombies for 98-dim state)
-        zombies_sorted = sorted(self.zombies, 
-                               key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y']))
+        # Zombie states (sort by distance, prioritize IN-BOUNDS zombies, take closest 13)
+        # Separate in-bounds and out-of-bounds zombies
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        out_of_bounds_zombies = [z for z in self.zombies if not self._is_zombie_in_bounds(z)]
         
-        max_zombies_for_state = 13  # To get exactly 98-dim
+        # Prioritize in-bounds zombies, then out-of-bounds
+        zombies_sorted = (sorted(in_bounds_zombies, 
+                                key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y'])) +
+                         sorted(out_of_bounds_zombies,
+                                key=lambda z: self._distance(self.player['x'], self.player['y'], z['x'], z['y'])))
+        
+        max_zombies_for_state = 13
         for i in range(max_zombies_for_state):
             if i < len(zombies_sorted):
                 zombie = zombies_sorted[i]
                 distance = self._distance(self.player['x'], self.player['y'], zombie['x'], zombie['y'])
                 angle_to_zombie = self._angle_to(self.player['x'], self.player['y'], zombie['x'], zombie['y'])
+                is_in_bounds = 1.0 if self._is_zombie_in_bounds(zombie) else 0.0
                 
                 state.extend([
                     zombie['x'] / self.SCREEN_WIDTH,
@@ -877,11 +991,12 @@ class ZombieShooterEnv:
                     zombie['health'] / self.ZOMBIE_STRONG_HEALTH,  # Normalize by max health
                     1.0 if zombie['type'] == 'strong' else 0.0,
                     min(distance / 1000.0, 1.0),  # Normalize distance
-                    angle_to_zombie / 360.0
+                    angle_to_zombie / 360.0,
+                    is_in_bounds  # NEW: Flag indicating if zombie is in bounds
                 ])
             else:
                 # Padding for empty zombie slots
-                state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+                state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0])
         
         # Pickup info (enhanced with directional info): 18 values total
         # Machinegun pickup: [distance, angle, exists, dx_normalized, dy_normalized, in_range]
@@ -947,13 +1062,14 @@ class ZombieShooterEnv:
         else:
             state.extend([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # No ammo pickup
         
-        # Distance to nearest zombie (1 value)
-        if len(self.zombies) > 0:
+        # Distance to nearest IN-BOUNDS zombie (1 value)
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        if len(in_bounds_zombies) > 0:
             min_dist = min([self._distance(self.player['x'], self.player['y'], z['x'], z['y']) 
-                           for z in self.zombies])
+                           for z in in_bounds_zombies])
             state.append(min(min_dist / 1000.0, 1.0))  # Normalize
         else:
-            state.append(1.0)  # No zombies, max distance
+            state.append(1.0)  # No in-bounds zombies, max distance
         
         # Zombie density in radius (1 value)
         density = self._compute_zombie_density()
@@ -962,8 +1078,27 @@ class ZombieShooterEnv:
         # Movement direction (4 values): [up, down, left, right]
         state.extend(self.last_movement_direction)
         
-        # Verify state dimension
-        assert len(state) == 111, f"State dimension mismatch: expected 111, got {len(state)}"
+        # NEW: Pickup urgency signals (3 values): [health_urgency, machinegun_urgency, ammo_urgency]
+        urgency = self._compute_pickup_urgency()
+        state.extend([
+            urgency['health'],
+            urgency['machinegun'],
+            urgency['ammo']
+        ])
+        
+        # NEW: Count of in-bounds vs total zombies (2 values)
+        in_bounds_count = len(self._get_in_bounds_zombies())
+        total_count = len(self.zombies)
+        state.extend([
+            min(in_bounds_count / 15.0, 1.0),  # Normalized in-bounds count
+            min(total_count / 20.0, 1.0)  # Normalized total count
+        ])
+        
+        # Verify state dimension (was 111, now 111 + 1 (zombie in_bounds flag) + 3 (urgency) + 2 (counts) - 1 (removed from zombie count) = 116)
+        # Actually: 6 + 3 + (13*7) + 18 + 1 + 1 + 4 + 3 + 2 = 6+3+91+18+1+1+4+3+2 = 129
+        # Let me recalculate: zombies now have 7 values each (added in_bounds flag)
+        # 6 + 3 + (13*7=91) + 18 + 1 + 1 + 4 + 3 + 2 = 129
+        assert len(state) == 129, f"State dimension mismatch: expected 129, got {len(state)}"
         
         return np.array(state, dtype=np.float32)
     
