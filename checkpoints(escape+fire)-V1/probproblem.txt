@@ -1,0 +1,1 @@
+the probelm here is that the agent shoot also on zombies that are out of the grid
