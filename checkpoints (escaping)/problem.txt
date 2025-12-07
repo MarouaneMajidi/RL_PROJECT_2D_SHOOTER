@@ -1,0 +1,3 @@
+The problem here is that the agent can shoot while escaping from zombies
+
+finale model stopped at 2,600,000 time steps
