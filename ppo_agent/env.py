@@ -330,7 +330,7 @@ class ZombieShooterEnv:
         current_pos = (self.player['x'], self.player['y'])
         if current_pos == self.last_player_pos:
             self.idle_frames += 1
-                reward += self.config.reward_idle_penalty
+            reward += self.config.reward_idle_penalty
         else:
             self.idle_frames = 0
         self.last_player_pos = current_pos
@@ -694,11 +694,11 @@ class ZombieShooterEnv:
             elif self._distance(pickup['x'], pickup['y'], self.player['x'], self.player['y']) < self.config.pickup_collection_radius:
                 if pickup['type'] == 'health':
                     # Strategic reward: higher when health is low (more urgent)
-                    if self.player['health'] < 100:
                     health_before = self.player['health']
-                        health_gained = min(100 - health_before, self.HEALTH_PICKUP_AMOUNT)
                     self.player['health'] = min(100, self.player['health'] + self.HEALTH_PICKUP_AMOUNT)
-                        
+                    
+                    # Only give reward if health was actually increased
+                    if health_before < 100:
                         # Scale reward by urgency (low health = higher reward)
                         base_reward = self.config.reward_health_pickup
                         urgency_multiplier = 1.0 + urgency['health'] * 2.0  # 1x to 3x
