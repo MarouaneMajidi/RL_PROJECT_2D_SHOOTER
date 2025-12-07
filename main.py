@@ -665,7 +665,7 @@ def main_agent_mode(model_path: str):
         return
     
     print("\nAgent is now playing with FULL game assets!")
-    print("Action space: 0-3=Move, 4=Shoot, 5=Idle (weapon switching handled internally)")
+    print("Action space: Multi-discrete [Movement (5) + Shoot (2)] - allows simultaneous actions!")
     print("Press ESC to quit, R to restart episode")
     print("="*50)
     
@@ -680,7 +680,7 @@ def main_agent_mode(model_path: str):
     episodes = 0
     
     def get_agent_state():
-        """Extract state for the agent matching the new 98-dim env.py format."""
+        """Extract state for the agent matching the new 111-dim env.py format with enhanced features."""
         state = []
         
         # Player state (6 values): [x, y, health, shoot_cooldown, angle, zombie_count]
@@ -725,8 +725,8 @@ def main_agent_mode(model_path: str):
                 # Padding for empty zombie slots
                 state.extend([0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
         
-        # Pickup info (9 values): 3 pickups * 3 features each
-        # Machinegun pickup: [distance, angle, exists]
+        # Pickup info (enhanced with directional info): 18 values total
+        # Machinegun pickup: [distance, angle, exists, dx_normalized, dy_normalized, in_range]
         nearest_mg = get_nearest_pickup('machinegun')
         if nearest_mg:
             mg_dist = math.hypot(game.player.x - nearest_mg.x, 
@@ -734,15 +734,19 @@ def main_agent_mode(model_path: str):
             dx = nearest_mg.x - game.player.x
             dy = nearest_mg.y - game.player.y
             mg_angle = math.degrees(math.atan2(-dy, dx)) % 360
+            in_range = 1.0 if mg_dist < 300.0 else 0.0  # pickup_detection_range
             state.extend([
                 min(mg_dist / 1000.0, 1.0),
                 mg_angle / 360.0,
-                1.0  # Exists
+                1.0,  # Exists
+                dx / SCREEN_WIDTH,  # Normalized dx
+                dy / SCREEN_HEIGHT,  # Normalized dy
+                in_range
             ])
         else:
-            state.extend([1.0, 0.0, 0.0])  # No machinegun pickup
+            state.extend([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # No machinegun pickup
         
-        # Health pack: [distance, angle, exists]
+        # Health pack: [distance, angle, exists, dx_normalized, dy_normalized, in_range]
         nearest_health = get_nearest_pickup('health')
         if nearest_health:
             health_dist = math.hypot(game.player.x - nearest_health.x, 
@@ -750,15 +754,19 @@ def main_agent_mode(model_path: str):
             dx = nearest_health.x - game.player.x
             dy = nearest_health.y - game.player.y
             health_angle = math.degrees(math.atan2(-dy, dx)) % 360
+            in_range = 1.0 if health_dist < 300.0 else 0.0
             state.extend([
                 min(health_dist / 1000.0, 1.0),
                 health_angle / 360.0,
-                1.0  # Exists
+                1.0,  # Exists
+                dx / SCREEN_WIDTH,  # Normalized dx
+                dy / SCREEN_HEIGHT,  # Normalized dy
+                in_range
             ])
         else:
-            state.extend([1.0, 0.0, 0.0])  # No health pack
+            state.extend([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # No health pack
         
-        # Ammo pickup: [distance, angle, exists]
+        # Ammo pickup: [distance, angle, exists, dx_normalized, dy_normalized, in_range]
         nearest_ammo = get_nearest_pickup('ammo')
         if nearest_ammo:
             ammo_dist = math.hypot(game.player.x - nearest_ammo.x, 
@@ -766,13 +774,17 @@ def main_agent_mode(model_path: str):
             dx = nearest_ammo.x - game.player.x
             dy = nearest_ammo.y - game.player.y
             ammo_angle = math.degrees(math.atan2(-dy, dx)) % 360
+            in_range = 1.0 if ammo_dist < 300.0 else 0.0
             state.extend([
                 min(ammo_dist / 1000.0, 1.0),
                 ammo_angle / 360.0,
-                1.0  # Exists
+                1.0,  # Exists
+                dx / SCREEN_WIDTH,  # Normalized dx
+                dy / SCREEN_HEIGHT,  # Normalized dy
+                in_range
             ])
         else:
-            state.extend([1.0, 0.0, 0.0])  # No ammo pickup
+            state.extend([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # No ammo pickup
         
         # Distance to nearest zombie (1 value)
         if len(game.zombies) > 0:
@@ -788,8 +800,12 @@ def main_agent_mode(model_path: str):
                      if math.hypot(game.player.x - z.x, game.player.y - z.y) < radius)
         state.append(min(density / 10.0, 1.0))  # Normalize (max 10 zombies)
         
+        # Movement direction (4 values): [up, down, left, right]
+        # For main.py, we'll use zeros (not tracked in main game loop)
+        state.extend([0.0, 0.0, 0.0, 0.0])
+        
         # Verify state dimension
-        assert len(state) == 98, f"State dimension mismatch: expected 98, got {len(state)}"
+        assert len(state) == 111, f"State dimension mismatch: expected 111, got {len(state)}"
         
         return np.array(state, dtype=np.float32)
     
@@ -820,20 +836,25 @@ def main_agent_mode(model_path: str):
                     print(f"\nEpisode {episodes} - Restarting...")
         
         if not game.game_over:
-            # Get action from agent
-            action, _, _ = agent.select_action(state, deterministic=True)
+            # Get action from agent (multi-discrete: combined action)
+            combined_action, _, _ = agent.select_action(state, deterministic=True)
             
-            # Apply action (6 actions: 0-3=Move, 4=Shoot, 5=Idle)
-            # Weapon switching is handled automatically when shooting
-            if action == 0:  # Move Up
+            # Decode multi-discrete action
+            movement_action, shoot_action = agent.decode_action(combined_action)
+            
+            # Apply movement (5 actions: 0-3=Move, 4=Idle)
+            if movement_action == 0:  # Move Up
                 game.player.y -= PLAYER_SPEED
-            elif action == 1:  # Move Down
+            elif movement_action == 1:  # Move Down
                 game.player.y += PLAYER_SPEED
-            elif action == 2:  # Move Left
+            elif movement_action == 2:  # Move Left
                 game.player.x -= PLAYER_SPEED
-            elif action == 3:  # Move Right
+            elif movement_action == 3:  # Move Right
                 game.player.x += PLAYER_SPEED
-            elif action == 4:  # Shoot (weapon selection handled internally)
+            # movement_action == 4 is Idle, do nothing
+            
+            # Apply shooting (independent of movement)
+            if shoot_action == 1:  # Shoot
                 # Auto-select best weapon: prefer machine gun if available and has ammo
                 if (game.player.has_machinegun and 
                     game.player.machinegun_ammo > 0 and 
@@ -854,8 +875,6 @@ def main_agent_mode(model_path: str):
                     else:
                         game.bullets.append(Bullet(game.player.x, game.player.y, game.player.angle, "pistol"))
                         game.player.shoot_cooldown = PISTOL_COOLDOWN
-            elif action == 5:  # Idle
-                pass
             
             # Keep player on screen
             game.player.x = max(0, min(SCREEN_WIDTH, game.player.x))

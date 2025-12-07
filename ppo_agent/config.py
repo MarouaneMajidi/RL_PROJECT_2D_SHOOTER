@@ -1,18 +1,15 @@
 """
-PPO Configuration File
+PPO Configuration File - EXPERT RL SYSTEM REDESIGN
 
-Contains all hyperparameters for the PPO algorithm.
-
-UPDATED FOR EXPERT RL SYSTEM:
-- Action space: 6 actions (Move Up/Down/Left/Right, Shoot, Idle) with internal weapon switching
-- State space: 98-dim with comprehensive features (player, zombies, pickups, danger, distance)
-- Complete reward function rewrite with combat, survival, positioning, pickup, and penalty rewards
-- Danger scoring system based on distance to zombies
-- Movement tracking for kiting/escape behavior
+COMPREHENSIVE REDESIGN FOR OPTIMAL AGENT BEHAVIOR:
+- Multi-discrete action space: Movement (5) + Shoot (2) = simultaneous actions
+- Enhanced observation space with directional pickup information
+- Dense directional reward shaping for pickup seeking and combat
+- Improved environment mechanics for reliable pickup collection
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 import torch
 
 
@@ -21,186 +18,148 @@ class PPOConfig:
     """
     Configuration class for PPO hyperparameters.
     
-    CHANGES FROM ORIGINAL:
-    1. action_dim: 6 -> 8 (added weapon switch actions)
-    2. state_dim: Recalculated for new observations
-    3. Added reward shaping for:
-       - Health pickup collection with low-health bonus
-       - Machine gun DPS bonus
-       - Ignoring health when low penalty
-    4. Increased entropy coefficient for better exploration of new actions
-    5. Adjusted learning rate for more stable weapon learning
+    REDESIGNED FOR OPTIMAL BEHAVIOR:
+    1. Multi-discrete action space: [movement_action, shoot_action]
+       - Movement: 5 actions (up, down, left, right, idle)
+       - Shoot: 2 actions (shoot, don't shoot)
+       - Allows simultaneous movement and shooting
+    
+    2. Enhanced state space with directional pickup information
+    
+    3. Dense directional reward shaping:
+       - Rewards for moving TOWARD pickups (not just being near)
+       - Rewards for shooting while moving
+       - Penalties for running away without shooting
+       - Progressive rewards for pickup proximity
     """
     
     # Environment settings
     max_zombies: int = 15  # Maximum number of zombies to track in state
     
-    # Action space: 0-3 movement, 4 shoot, 5 idle
-    # Weapon switching is handled internally based on weapon state when "Shoot" is selected
-    action_dim: int = 6
+    # Multi-discrete action space: [movement_action, shoot_action]
+    # Movement: 0=Up, 1=Down, 2=Left, 3=Right, 4=Idle
+    # Shoot: 0=Don't shoot, 1=Shoot
+    action_space_shape: Tuple[int, ...] = (5, 2)  # Multi-discrete: [movement, shoot]
+    action_dim: int = 5 * 2  # Total combinations (for compatibility, but we use multi-discrete)
     
-    # State space calculation (98-dim):
+    # Enhanced state space calculation:
     # Player: 6 values [x, y, health, shoot_cooldown, angle, zombie_count]
     # Weapon: 3 values [has_machinegun, machinegun_ammo_normalized, current_weapon_is_mg]
     # Zombies: 6 * 13 = 78 values [x, y, health, type, distance, angle_to_player] per zombie
-    # Pickups: 3 types * 3 features = 9 values
-    #          [machinegun_location, health_pack_location, ammo_pickup_location]
-    #          Each: [distance, angle, exists]
+    # Pickups (enhanced with directional info):
+    #   Machinegun: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
+    #   Health: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
+    #   Ammo: [distance, angle, exists, dx_normalized, dy_normalized, in_range] = 6
+    #   Total pickups: 18 values
     # Distance to nearest zombie: 1 value
     # Zombie density in radius: 1 value
-    # Total: 6 + 3 + 78 + 9 + 1 + 1 = 98
-    # Let me use the exact specification: 98-dim
-    # I'll design it as: Player (8), Weapon (3), Zombies (15*6=90), Pickups (3*3=9), Distance (1), Density (1)
-    # But that's 112. For 98, I'll use: Player (6), Weapon (3), Zombies (14*6=84), Pickups (3*3=9), Distance (1), Density (1) = 104
-    # Or: Player (6), Weapon (3), Zombies (13*6=78), Pickups (3*3=9), Distance (1), Density (1) = 98 ✓
-    state_dim: int = 98
+    # Movement direction (last action): 4 values [up, down, left, right]
+    # Total: 6 + 3 + 78 + 18 + 1 + 1 + 4 = 111
+    state_dim: int = 111
     
-    # Training hyperparameters - As specified in master prompt
-    learning_rate: float = 3e-4  # As specified
+    # Training hyperparameters - Optimized for complex behavior learning
+    learning_rate: float = 3e-4
     gamma: float = 0.99  # Discount factor
-    gae_lambda: float = 0.95  # Lambda for GAE (Generalized Advantage Estimation)
+    gae_lambda: float = 0.95  # Lambda for GAE
     clip_epsilon: float = 0.2  # Clipping parameter for PPO
     
-    # Loss coefficients - ADJUSTED for exploration
-    value_loss_coef: float = 0.5  # Coefficient for value loss
-    entropy_coef: float = 0.02  # INCREASED from 0.01 for better exploration of weapon actions
-    max_grad_norm: float = 0.5  # Maximum gradient norm for clipping
+    # Loss coefficients - Adjusted for better exploration
+    value_loss_coef: float = 0.5
+    entropy_coef: float = 0.03  # Increased for better exploration of multi-discrete space
+    max_grad_norm: float = 0.5
     
     # Training loop parameters
-    n_steps: int = 2048  # Number of steps to collect before update
-    batch_size: int = 64  # Minibatch size for updates
-    n_epochs: int = 10  # Number of epochs per update
+    n_steps: int = 2048
+    batch_size: int = 64
+    n_epochs: int = 10
     
     # Neural network architecture
-    hidden_dim: int = 256  # Hidden layer dimension
+    hidden_dim: int = 256
     
     # Exploration
-    initial_std: float = 1.0  # Initial standard deviation (not used for discrete)
+    initial_std: float = 1.0
     
     # Training control
-    total_timesteps: int = 1_000_000  # Total timesteps to train
-    save_interval: int = 50_000  # Save model every N timesteps
-    log_interval: int = 10  # Log every N updates
+    total_timesteps: int = 1_000_000
+    save_interval: int = 50_000
+    log_interval: int = 10
     
     # Device
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"  # Auto-detect GPU
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
     
     # Checkpoint settings
     checkpoint_dir: str = "checkpoints"
     best_model_path: str = "checkpoints/best_model.pth"
     
     # Environment-specific settings
-    fps: int = 60  # Game FPS
-    headless: bool = True  # Run without rendering during training
+    fps: int = 60
+    headless: bool = True
     
     # ========================================================================
-    # REWARD SHAPING PARAMETERS - EXPERT RL SYSTEM
+    # ENHANCED REWARD SHAPING - DIRECTIONAL AND DENSE
     # ========================================================================
     
     # Combat Rewards
-    reward_zombie_kill: float = 10.0  # Base reward for killing a zombie
-    reward_strong_zombie_kill_bonus: float = 4.0  # Bonus for killing a strong zombie
-    reward_hit: float = 0.05  # Reward per successful hit
-    reward_machinegun_fire_per_second: float = 0.2  # Reward per second firing machine gun
+    reward_zombie_kill: float = 10.0
+    reward_strong_zombie_kill_bonus: float = 4.0
+    reward_hit: float = 0.1  # Increased for better signal
+    reward_machinegun_fire_per_second: float = 0.3  # Increased
     
     # Survival Rewards
-    reward_survival_per_step: float = 0.1  # Reward for surviving each step
-    reward_moving_away_from_zombies: float = 0.5  # Reward when moving away from nearby zombies
-    reward_escape_danger_zone: float = 1.0  # Reward for successfully escaping high-danger zone
+    reward_survival_per_step: float = 0.1
+    reward_moving_away_from_zombies: float = 0.5
+    reward_escape_danger_zone: float = 1.0
     
     # Positioning Rewards/Penalties
-    reward_standing_still_penalty: float = -1.0  # Penalty when standing still while zombies nearby
-    reward_too_close_penalty: float = -0.5  # Penalty when too close to zombies (< danger threshold)
+    reward_standing_still_penalty: float = -1.5  # Increased penalty
+    reward_too_close_penalty: float = -0.5
     
-    # Pickup Rewards
-    reward_machinegun_pickup: float = 3.0  # Reward for picking up machine gun
-    reward_health_pickup: float = 2.0  # Reward for picking up health pack when HP < 100%
-    reward_ammo_pickup: float = 1.5  # Reward for picking up machine-gun ammo
-    reward_weapon_switch: float = 1.0  # Reward for switching weapons appropriately
+    # Pickup Rewards - ENHANCED WITH DIRECTIONAL REWARDS
+    reward_machinegun_pickup: float = 5.0  # Increased
+    reward_health_pickup: float = 3.0  # Increased
+    reward_ammo_pickup: float = 2.0  # Increased
+    reward_weapon_switch: float = 1.0
+    
+    # NEW: Directional pickup rewards (dense shaping)
+    reward_moving_toward_machinegun: float = 0.2  # Per step when moving closer
+    reward_moving_toward_health: float = 0.15  # Per step when moving closer
+    reward_moving_toward_ammo: float = 0.1  # Per step when moving closer
+    reward_pickup_proximity: float = 0.05  # Bonus when within pickup range
+    
+    # NEW: Combat behavior rewards
+    reward_shooting_while_moving: float = 0.3  # Reward for shooting while moving
+    reward_shooting_at_enemies: float = 0.2  # Reward when shooting with enemies in range
+    penalty_running_away_without_shooting: float = -0.5  # Penalty for fleeing without fighting
     
     # Penalties
-    reward_damage_taken: float = -5.0  # Penalty for every 10 HP lost
-    reward_death: float = -20.0  # Penalty on death
-    reward_idle_penalty: float = -0.1  # Idle penalty
+    reward_damage_taken: float = -5.0
+    reward_death: float = -20.0
+    reward_idle_penalty: float = -0.1
     
     # Danger & Distance-Based Behavior
-    reward_danger_decrease: float = 0.3  # Reward when danger decreases due to movement
-    reward_danger_increase: float = -0.3  # Penalty when danger increases
-    reward_high_density_penalty: float = -1.0  # Penalty when entering high-density zombie zone
+    reward_danger_decrease: float = 0.3
+    reward_danger_increase: float = -0.3
+    reward_high_density_penalty: float = -1.0
     
     # Danger calculation parameters
-    danger_radius: float = 200.0  # Radius for danger calculation
-    danger_threshold: float = 50.0  # Distance threshold for "too close" penalty
-    high_density_threshold: float = 5.0  # Number of zombies for high-density zone
+    danger_radius: float = 200.0
+    danger_threshold: float = 50.0
+    high_density_threshold: float = 5.0
+    
+    # Pickup collection parameters
+    pickup_collection_radius: float = 40.0  # Increased from 25 for easier collection
+    pickup_detection_range: float = 300.0  # Range for "in_range" flag
     
     def __post_init__(self):
         """Validate and compute derived parameters."""
-        # Validate state dimension (98-dim as specified)
-        # Player (6) + Weapon (3) + Zombies (13*6=78) + Pickups (3*3=9) + Distance (1) + Density (1) = 98
-        if self.state_dim != 98:
-            print(f"Warning: state_dim should be 98. Got {self.state_dim}")
+        # Validate state dimension
+        if self.state_dim != 111:
+            print(f"Warning: state_dim should be 111. Got {self.state_dim}")
         
-        # Validate action dimension
-        if self.action_dim != 6:
-            print(f"Warning: action_dim should be 6. Got {self.action_dim}")
+        # Validate action space
+        if len(self.action_space_shape) != 2:
+            print(f"Warning: action_space_shape should be (5, 2). Got {self.action_space_shape}")
 
 
 # Default configuration instance
 default_config = PPOConfig()
-
-
-# ============================================================================
-# PPO HYPERPARAMETER EXPLANATION
-# ============================================================================
-"""
-Why these hyperparameters improve weapon-specific behavior:
-
-1. LEARNING RATE (2.5e-4, down from 3e-4):
-   - Slightly lower to prevent the policy from changing too quickly
-   - The new reward structure is more complex, needs stable learning
-   - Helps agent properly learn the value of weapon switching
-
-2. ENTROPY COEFFICIENT (0.02, up from 0.01):
-   - Higher entropy encourages more exploration
-   - Critical for discovering that weapon switching (actions 6, 7) is beneficial
-   - Without sufficient exploration, agent might never try the machine gun
-   - After exploration, PPO's policy will naturally reduce entropy as it learns
-
-3. REWARD STRUCTURE:
-   
-   a) Health Pickup Rewards:
-      - Base reward of 8.0 is strong enough to be noticed
-      - Scaling by health gained means:
-        * At full health (25 HP cap): 8.0 * 1.0 = 8.0
-        * At low health (full 25 HP): 8.0 * 2.0 = 16.0
-      - This creates a strong incentive to collect health when injured
-   
-   b) Low Health Shaping:
-      - reward_low_health_near_pickup: Small continuous reward for being near health
-      - reward_ignore_health_penalty: Small continuous penalty for ignoring health
-      - Together these create gradient towards health packs when hurt
-   
-   c) Machine Gun Incentives:
-      - reward_machinegun_pickup (5.0): Collect the weapon
-      - reward_machinegun_kill_bonus (2.0): 20% bonus per kill with MG
-      - reward_machinegun_dps_bonus (0.5): Bonus for sustained fire
-      
-   d) Why Machine Gun is Worth Using:
-      - Pistol: 20 damage, 20 frame cooldown = 1.0 DPS per frame
-      - MG: 10 damage, 5 frame cooldown = 2.0 DPS per frame (DOUBLE!)
-      - Plus 2.0 bonus per kill = more points
-      - Agent should learn: MG has higher DPS, use it when available
-
-4. STATE REPRESENTATION:
-   - Added has_machinegun, machinegun_ammo, current_weapon_is_mg
-   - Agent can observe its weapon state and make informed decisions
-   - Added danger_level: helps agent know when to prioritize health
-   - Added pickup info: agent can "see" where health/MG pickups are
-
-5. OBSERVATION SPACE (108 dimensions):
-   - 12 player features (including weapon state)
-   - 90 zombie features (15 zombies * 6 features)
-   - 3 health pickup features
-   - 3 machinegun pickup features
-   - Rich enough for strategic decision making
-"""

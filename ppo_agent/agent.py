@@ -42,10 +42,10 @@ class PPOAgent:
         self.device = torch.device(config.device if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
         
-        # Initialize actor-critic network
+        # Initialize actor-critic network with multi-discrete action space
         self.policy = ActorCritic(
             state_dim=config.state_dim,
-            action_dim=config.action_dim,
+            action_space_shape=config.action_space_shape,
             hidden_dim=config.hidden_dim
         ).to(self.device)
         
@@ -70,15 +70,15 @@ class PPOAgent:
     
     def select_action(self, state: np.ndarray, deterministic: bool = False) -> Tuple[int, float, float]:
         """
-        Select an action given the current state.
+        Select actions given the current state (multi-discrete).
         
         Args:
             state: Current state observation
-            deterministic: If True, select most likely action (no sampling)
+            deterministic: If True, select most likely actions (no sampling)
         
         Returns:
-            action: Selected action
-            log_prob: Log probability of the action
+            action: Combined action (movement * 2 + shoot) for compatibility
+            log_prob: Log probability of the combined action
             value: State value estimate
         """
         with torch.no_grad():
@@ -86,6 +86,20 @@ class PPOAgent:
             action, log_prob, value = self.policy.get_action(state_tensor, deterministic)
             
             return action.cpu().item(), log_prob.cpu().item(), value.squeeze().cpu().item()
+    
+    def decode_action(self, combined_action: int) -> Tuple[int, int]:
+        """
+        Decode combined action back to (movement, shoot) tuple.
+        
+        Args:
+            combined_action: Combined action value
+        
+        Returns:
+            (movement_action, shoot_action) tuple
+        """
+        movement = combined_action // self.config.action_space_shape[1]
+        shoot = combined_action % self.config.action_space_shape[1]
+        return movement, shoot
     
     def store_transition(self, state: np.ndarray, action: int, reward: float, 
                         value: float, log_prob: float, done: bool):
