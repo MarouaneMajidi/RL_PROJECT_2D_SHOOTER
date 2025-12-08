@@ -1,3 +1,0 @@
-The agent here leanred only to shoot and he rarely moves
-
-the final model was in 3400000 time steps

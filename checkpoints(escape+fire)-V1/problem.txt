@@ -1,4 +1,0 @@
-The problem here is that the agent fires also on the zombies that are out of the grid (the ones the they did not enter yet)
-
-The final model what in 1000000 timesteps
-
