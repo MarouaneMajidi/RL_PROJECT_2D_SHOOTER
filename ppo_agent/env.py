@@ -59,8 +59,22 @@ class ZombieShooterEnv:
     """
     
     # Game constants (imported from main.py)
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 600
+    # Arena (playable area) - stays exactly the same
+    ARENA_WIDTH = 800
+    ARENA_HEIGHT = 600
+    
+    # Expanded screen size (visible area, larger than arena)
+    SCREEN_WIDTH = 1000  # Expanded to show area around arena
+    SCREEN_HEIGHT = 800  # Expanded to show area around arena
+    
+    # Glass border configuration
+    GLASS_BORDER_THICKNESS = 5  # Thickness of glass border in pixels
+    GLASS_COLOR = (200, 200, 255, 180)  # Semi-transparent blue-white glass (RGBA)
+    
+    # Calculate arena position (centered in expanded screen)
+    ARENA_X_OFFSET = (SCREEN_WIDTH - ARENA_WIDTH) // 2
+    ARENA_Y_OFFSET = (SCREEN_HEIGHT - ARENA_HEIGHT) // 2
+    
     FPS = 60
     PLAYER_SPEED = 5
     ZOMBIE_SPEED = 2
@@ -462,9 +476,12 @@ class ZombieShooterEnv:
             
             shot_weapon = self._player_shoot()
         
-        # Keep player on screen
-        self.player['x'] = max(0, min(self.SCREEN_WIDTH, self.player['x']))
-        self.player['y'] = max(0, min(self.SCREEN_HEIGHT, self.player['y']))
+        # Keep player within arena bounds (glass borders prevent movement outside)
+        # Arena is positioned at (ARENA_X_OFFSET, ARENA_Y_OFFSET) in the expanded screen
+        self.player['x'] = max(self.ARENA_X_OFFSET, 
+                               min(self.ARENA_X_OFFSET + self.ARENA_WIDTH, self.player['x']))
+        self.player['y'] = max(self.ARENA_Y_OFFSET, 
+                               min(self.ARENA_Y_OFFSET + self.ARENA_HEIGHT, self.player['y']))
         
         # Update cooldown
         if self.player['shoot_cooldown'] > 0:
@@ -526,9 +543,12 @@ class ZombieShooterEnv:
         elif action == 5:  # Idle (do nothing)
             pass
         
-        # Keep player on screen
-        self.player['x'] = max(0, min(self.SCREEN_WIDTH, self.player['x']))
-        self.player['y'] = max(0, min(self.SCREEN_HEIGHT, self.player['y']))
+        # Keep player within arena bounds (glass borders prevent movement outside)
+        # Arena is positioned at (ARENA_X_OFFSET, ARENA_Y_OFFSET) in the expanded screen
+        self.player['x'] = max(self.ARENA_X_OFFSET, 
+                               min(self.ARENA_X_OFFSET + self.ARENA_WIDTH, self.player['x']))
+        self.player['y'] = max(self.ARENA_Y_OFFSET, 
+                               min(self.ARENA_Y_OFFSET + self.ARENA_HEIGHT, self.player['y']))
         
         # Update cooldown
         if self.player['shoot_cooldown'] > 0:
@@ -610,7 +630,7 @@ class ZombieShooterEnv:
             bullet['x'] += math.cos(bullet['angle']) * self.BULLET_SPEED
             bullet['y'] -= math.sin(bullet['angle']) * self.BULLET_SPEED
             
-            # Check if off screen
+            # Check if off screen (expanded screen bounds)
             if (bullet['x'] < 0 or bullet['x'] > self.SCREEN_WIDTH or
                 bullet['y'] < 0 or bullet['y'] > self.SCREEN_HEIGHT):
                 bullets_to_remove.append(bullet)
@@ -854,16 +874,16 @@ class ZombieShooterEnv:
     
     def _is_zombie_in_bounds(self, zombie: Dict) -> bool:
         """
-        Check if a zombie is within the playable area.
+        Check if a zombie is within the playable arena area (inside glass borders).
         
         Args:
             zombie: Zombie dictionary with 'x' and 'y' keys
         
         Returns:
-            True if zombie is in bounds, False otherwise
+            True if zombie is in bounds (inside arena), False otherwise
         """
-        return (0 <= zombie['x'] <= self.SCREEN_WIDTH and 
-                0 <= zombie['y'] <= self.SCREEN_HEIGHT)
+        return (self.ARENA_X_OFFSET <= zombie['x'] <= self.ARENA_X_OFFSET + self.ARENA_WIDTH and 
+                self.ARENA_Y_OFFSET <= zombie['y'] <= self.ARENA_Y_OFFSET + self.ARENA_HEIGHT)
     
     def _get_in_bounds_zombies(self) -> List[Dict]:
         """
@@ -950,9 +970,10 @@ class ZombieShooterEnv:
         # Player state (6 values): [x, y, health, shoot_cooldown, angle, zombie_count]
         # Use in-bounds zombie count for more accurate representation
         in_bounds_count = len(self._get_in_bounds_zombies())
+        # Normalize player position relative to arena (not screen)
         state.extend([
-            self.player['x'] / self.SCREEN_WIDTH,  # Normalize
-            self.player['y'] / self.SCREEN_HEIGHT,
+            (self.player['x'] - self.ARENA_X_OFFSET) / self.ARENA_WIDTH,  # Normalize to arena
+            (self.player['y'] - self.ARENA_Y_OFFSET) / self.ARENA_HEIGHT,  # Normalize to arena
             self.player['health'] / 100.0,
             self.player['shoot_cooldown'] / self.PISTOL_COOLDOWN,
             self.player['angle'] / 360.0,
@@ -985,9 +1006,10 @@ class ZombieShooterEnv:
                 angle_to_zombie = self._angle_to(self.player['x'], self.player['y'], zombie['x'], zombie['y'])
                 is_in_bounds = 1.0 if self._is_zombie_in_bounds(zombie) else 0.0
                 
+                # Normalize zombie position relative to arena (for consistency with player)
                 state.extend([
-                    zombie['x'] / self.SCREEN_WIDTH,
-                    zombie['y'] / self.SCREEN_HEIGHT,
+                    (zombie['x'] - self.ARENA_X_OFFSET) / self.ARENA_WIDTH,
+                    (zombie['y'] - self.ARENA_Y_OFFSET) / self.ARENA_HEIGHT,
                     zombie['health'] / self.ZOMBIE_STRONG_HEALTH,  # Normalize by max health
                     1.0 if zombie['type'] == 'strong' else 0.0,
                     min(distance / 1000.0, 1.0),  # Normalize distance
@@ -1006,8 +1028,8 @@ class ZombieShooterEnv:
                                     nearest_mg['x'], nearest_mg['y'])
             mg_angle = self._angle_to(self.player['x'], self.player['y'],
                                      nearest_mg['x'], nearest_mg['y'])
-            dx = (nearest_mg['x'] - self.player['x']) / self.SCREEN_WIDTH
-            dy = (nearest_mg['y'] - self.player['y']) / self.SCREEN_HEIGHT
+            dx = (nearest_mg['x'] - self.player['x']) / self.ARENA_WIDTH
+            dy = (nearest_mg['y'] - self.player['y']) / self.ARENA_HEIGHT
             in_range = 1.0 if mg_dist < self.config.pickup_detection_range else 0.0
             state.extend([
                 min(mg_dist / 1000.0, 1.0),
@@ -1027,8 +1049,8 @@ class ZombieShooterEnv:
                                         nearest_health['x'], nearest_health['y'])
             health_angle = self._angle_to(self.player['x'], self.player['y'],
                                          nearest_health['x'], nearest_health['y'])
-            dx = (nearest_health['x'] - self.player['x']) / self.SCREEN_WIDTH
-            dy = (nearest_health['y'] - self.player['y']) / self.SCREEN_HEIGHT
+            dx = (nearest_health['x'] - self.player['x']) / self.ARENA_WIDTH
+            dy = (nearest_health['y'] - self.player['y']) / self.ARENA_HEIGHT
             in_range = 1.0 if health_dist < self.config.pickup_detection_range else 0.0
             state.extend([
                 min(health_dist / 1000.0, 1.0),
@@ -1048,8 +1070,8 @@ class ZombieShooterEnv:
                                        nearest_ammo['x'], nearest_ammo['y'])
             ammo_angle = self._angle_to(self.player['x'], self.player['y'],
                                        nearest_ammo['x'], nearest_ammo['y'])
-            dx = (nearest_ammo['x'] - self.player['x']) / self.SCREEN_WIDTH
-            dy = (nearest_ammo['y'] - self.player['y']) / self.SCREEN_HEIGHT
+            dx = (nearest_ammo['x'] - self.player['x']) / self.ARENA_WIDTH
+            dy = (nearest_ammo['y'] - self.player['y']) / self.ARENA_HEIGHT
             in_range = 1.0 if ammo_dist < self.config.pickup_detection_range else 0.0
             state.extend([
                 min(ammo_dist / 1000.0, 1.0),
@@ -1105,8 +1127,8 @@ class ZombieShooterEnv:
     def _create_player(self) -> Dict:
         """Create a new player with full weapon support."""
         return {
-            'x': self.SCREEN_WIDTH // 2,
-            'y': self.SCREEN_HEIGHT // 2,
+            'x': self.ARENA_X_OFFSET + self.ARENA_WIDTH // 2,  # Center of arena
+            'y': self.ARENA_Y_OFFSET + self.ARENA_HEIGHT // 2,  # Center of arena
             'angle': 0,
             'health': 100,
             'score': 0,
@@ -1117,20 +1139,27 @@ class ZombieShooterEnv:
         }
     
     def _spawn_zombie(self) -> Dict:
-        """Spawn a new zombie."""
+        """
+        Spawn a new zombie uniformly along the full perimeter of the playable arena.
+        
+        Zombies spawn directly on the arena perimeter boundary (inside the arena).
+        Spawn positions are uniformly distributed along all four sides.
+        """
+        # Randomly select which side of the perimeter to spawn on
         side = random.randint(0, 3)
-        if side == 0:  # Top
-            x = random.randint(0, self.SCREEN_WIDTH)
-            y = -50
-        elif side == 1:  # Right
-            x = self.SCREEN_WIDTH + 50
-            y = random.randint(0, self.SCREEN_HEIGHT)
-        elif side == 2:  # Bottom
-            x = random.randint(0, self.SCREEN_WIDTH)
-            y = self.SCREEN_HEIGHT + 50
-        else:  # Left
-            x = -50
-            y = random.randint(0, self.SCREEN_HEIGHT)
+        
+        if side == 0:  # Top side - spawn along full width
+            x = random.uniform(self.ARENA_X_OFFSET, self.ARENA_X_OFFSET + self.ARENA_WIDTH)
+            y = self.ARENA_Y_OFFSET  # Spawn on top edge of arena
+        elif side == 1:  # Right side - spawn along full height
+            x = self.ARENA_X_OFFSET + self.ARENA_WIDTH  # Spawn on right edge of arena
+            y = random.uniform(self.ARENA_Y_OFFSET, self.ARENA_Y_OFFSET + self.ARENA_HEIGHT)
+        elif side == 2:  # Bottom side - spawn along full width
+            x = random.uniform(self.ARENA_X_OFFSET, self.ARENA_X_OFFSET + self.ARENA_WIDTH)
+            y = self.ARENA_Y_OFFSET + self.ARENA_HEIGHT  # Spawn on bottom edge of arena
+        else:  # Left side - spawn along full height
+            x = self.ARENA_X_OFFSET  # Spawn on left edge of arena
+            y = random.uniform(self.ARENA_Y_OFFSET, self.ARENA_Y_OFFSET + self.ARENA_HEIGHT)
         
         zombie_type = 'strong' if random.random() < self.ZOMBIE_TYPE2_SPAWN_PROBABILITY else 'normal'
         
@@ -1186,8 +1215,42 @@ class ZombieShooterEnv:
         if self.headless:
             return
         
-        # Simple rendering
+        # Simple rendering - fill expanded screen
         self.screen.fill((96, 96, 96))
+        
+        # Draw arena background (darker to distinguish playable area)
+        arena_rect = pygame.Rect(
+            self.ARENA_X_OFFSET,
+            self.ARENA_Y_OFFSET,
+            self.ARENA_WIDTH,
+            self.ARENA_HEIGHT
+        )
+        pygame.draw.rect(self.screen, (80, 80, 80), arena_rect)
+        
+        # Draw glass borders around the arena (only on left and right sides as requested)
+        # Create a surface for transparency
+        glass_surface = pygame.Surface((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SRCALPHA)
+        
+        # Left glass border (full height of arena)
+        left_border = pygame.Rect(
+            self.ARENA_X_OFFSET - self.GLASS_BORDER_THICKNESS,
+            self.ARENA_Y_OFFSET,
+            self.GLASS_BORDER_THICKNESS,
+            self.ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, self.GLASS_COLOR, left_border)
+        
+        # Right glass border (full height of arena)
+        right_border = pygame.Rect(
+            self.ARENA_X_OFFSET + self.ARENA_WIDTH,
+            self.ARENA_Y_OFFSET,
+            self.GLASS_BORDER_THICKNESS,
+            self.ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, self.GLASS_COLOR, right_border)
+        
+        # Blit the glass surface onto the screen
+        self.screen.blit(glass_surface, (0, 0))
         
         # Draw player
         color = (0, 255, 0) if self.player['weapon'] == 'pistol' else (0, 200, 255)

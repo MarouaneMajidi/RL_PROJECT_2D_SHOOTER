@@ -34,8 +34,22 @@ except ImportError:
 pygame.init()
 
 # Game constants
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+# Arena (playable area) - stays exactly the same
+ARENA_WIDTH = 800
+ARENA_HEIGHT = 600
+
+# Expanded screen size (visible area, larger than arena)
+SCREEN_WIDTH = 1000  # Expanded to show area around arena
+SCREEN_HEIGHT = 800  # Expanded to show area around arena
+
+# Glass border configuration
+GLASS_BORDER_THICKNESS = 5  # Thickness of glass border in pixels
+GLASS_COLOR = (200, 200, 255, 180)  # Semi-transparent blue-white glass (RGBA)
+
+# Calculate arena position (centered in expanded screen)
+ARENA_X_OFFSET = (SCREEN_WIDTH - ARENA_WIDTH) // 2
+ARENA_Y_OFFSET = (SCREEN_HEIGHT - ARENA_HEIGHT) // 2
+
 FPS = 60
 PLAYER_SPEED = 5
 ZOMBIE_SPEED = 2
@@ -99,7 +113,8 @@ player_knife_img = load_sprite("player knife.gif", 1.2)
 zombie_img = load_sprite("zombie.gif", 1.2)
 zombie2_img = load_sprite("zombie 2.gif", 1.2)
 background_img = pygame.image.load(os.path.join(ASSET_DIR, "background.png")).convert()
-background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+# Scale background to arena size (playable area)
+background_img = pygame.transform.scale(background_img, (ARENA_WIDTH, ARENA_HEIGHT))
 
 
 class Player:
@@ -108,8 +123,8 @@ class Player:
         
     def reset(self):
         """Reset player to initial state."""
-        self.x = SCREEN_WIDTH // 2
-        self.y = SCREEN_HEIGHT // 2
+        self.x = ARENA_X_OFFSET + ARENA_WIDTH // 2  # Center of arena
+        self.y = ARENA_Y_OFFSET + ARENA_HEIGHT // 2  # Center of arena
         self.angle = 0
         self.weapon = "pistol"  # pistol, machinegun, knife
         self.health = 100
@@ -136,9 +151,9 @@ class Player:
         if keys[K_d] or keys[K_RIGHT]:
             self.x += self.speed
             
-        # Keep player on screen
-        self.x = max(0, min(SCREEN_WIDTH, self.x))
-        self.y = max(0, min(SCREEN_HEIGHT, self.y))
+        # Keep player within arena bounds (glass borders prevent movement outside)
+        self.x = max(ARENA_X_OFFSET, min(ARENA_X_OFFSET + ARENA_WIDTH, self.x))
+        self.y = max(ARENA_Y_OFFSET, min(ARENA_Y_OFFSET + ARENA_HEIGHT, self.y))
         
         # Weapon switching
         if keys[K_1]:
@@ -266,6 +281,7 @@ class Bullet:
     def update(self):
         self.x += math.cos(self.angle) * self.speed
         self.y -= math.sin(self.angle) * self.speed
+        # Check if bullet is off the expanded screen
         return (self.x < 0 or self.x > SCREEN_WIDTH or 
                 self.y < 0 or self.y > SCREEN_HEIGHT)
         
@@ -410,19 +426,27 @@ class GameState:
 
 
 def spawn_zombie():
+    """
+    Spawn a new zombie uniformly along the full perimeter of the playable arena.
+    
+    Zombies spawn directly on the arena perimeter boundary (inside the arena).
+    Spawn positions are uniformly distributed along all four sides.
+    """
+    # Randomly select which side of the perimeter to spawn on
     side = random.randint(0, 3)
-    if side == 0:
-        x = random.randint(0, SCREEN_WIDTH)
-        y = -50
-    elif side == 1:
-        x = SCREEN_WIDTH + 50
-        y = random.randint(0, SCREEN_HEIGHT)
-    elif side == 2:
-        x = random.randint(0, SCREEN_WIDTH)
-        y = SCREEN_HEIGHT + 50
-    else:
-        x = -50
-        y = random.randint(0, SCREEN_HEIGHT)
+    
+    if side == 0:  # Top side - spawn along full width
+        x = random.uniform(ARENA_X_OFFSET, ARENA_X_OFFSET + ARENA_WIDTH)
+        y = ARENA_Y_OFFSET  # Spawn on top edge of arena
+    elif side == 1:  # Right side - spawn along full height
+        x = ARENA_X_OFFSET + ARENA_WIDTH  # Spawn on right edge of arena
+        y = random.uniform(ARENA_Y_OFFSET, ARENA_Y_OFFSET + ARENA_HEIGHT)
+    elif side == 2:  # Bottom side - spawn along full width
+        x = random.uniform(ARENA_X_OFFSET, ARENA_X_OFFSET + ARENA_WIDTH)
+        y = ARENA_Y_OFFSET + ARENA_HEIGHT  # Spawn on bottom edge of arena
+    else:  # Left side - spawn along full height
+        x = ARENA_X_OFFSET  # Spawn on left edge of arena
+        y = random.uniform(ARENA_Y_OFFSET, ARENA_Y_OFFSET + ARENA_HEIGHT)
     zombie_type = "strong" if random.random() < ZOMBIE_TYPE2_SPAWN_PROBABILITY else "normal"
     return Zombie(x, y, zombie_type)
 
@@ -612,10 +636,44 @@ def main_manual_mode():
                             game.game_over = True
         
         # Draw everything
+        # Fill expanded screen background
+        screen.fill(BG_COLOR)
+        
+        # Draw arena background (playable area)
+        arena_rect = pygame.Rect(
+            ARENA_X_OFFSET,
+            ARENA_Y_OFFSET,
+            ARENA_WIDTH,
+            ARENA_HEIGHT
+        )
         if background_img:
-            screen.blit(background_img, (0, 0))
+            screen.blit(background_img, (ARENA_X_OFFSET, ARENA_Y_OFFSET))
         else:
-            screen.fill(BG_COLOR)
+            pygame.draw.rect(screen, (80, 80, 80), arena_rect)
+        
+        # Draw glass borders around the arena (only on left and right sides as requested)
+        glass_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        
+        # Left glass border (full height of arena)
+        left_border = pygame.Rect(
+            ARENA_X_OFFSET - GLASS_BORDER_THICKNESS,
+            ARENA_Y_OFFSET,
+            GLASS_BORDER_THICKNESS,
+            ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, GLASS_COLOR, left_border)
+        
+        # Right glass border (full height of arena)
+        right_border = pygame.Rect(
+            ARENA_X_OFFSET + ARENA_WIDTH,
+            ARENA_Y_OFFSET,
+            GLASS_BORDER_THICKNESS,
+            ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, GLASS_COLOR, right_border)
+        
+        # Blit the glass surface onto the screen
+        screen.blit(glass_surface, (0, 0))
         
         game.player.draw(screen)
         for zombie in game.zombies:
@@ -680,8 +738,9 @@ def main_agent_mode(model_path: str):
     episodes = 0
     
     def is_zombie_in_bounds(zombie):
-        """Check if zombie is within playable area."""
-        return (0 <= zombie.x <= SCREEN_WIDTH and 0 <= zombie.y <= SCREEN_HEIGHT)
+        """Check if zombie is within playable arena area (inside glass borders)."""
+        return (ARENA_X_OFFSET <= zombie.x <= ARENA_X_OFFSET + ARENA_WIDTH and 
+                ARENA_Y_OFFSET <= zombie.y <= ARENA_Y_OFFSET + ARENA_HEIGHT)
     
     def get_in_bounds_zombies():
         """Get only zombies within playable area."""
@@ -701,10 +760,11 @@ def main_agent_mode(model_path: str):
         state = []
         
         # Player state (6 values): [x, y, health, shoot_cooldown, angle, zombie_count]
+        # Normalize player position relative to arena (not screen)
         in_bounds_zombies = get_in_bounds_zombies()
         state.extend([
-            game.player.x / SCREEN_WIDTH,
-            game.player.y / SCREEN_HEIGHT,
+            (game.player.x - ARENA_X_OFFSET) / ARENA_WIDTH,  # Normalize to arena
+            (game.player.y - ARENA_Y_OFFSET) / ARENA_HEIGHT,  # Normalize to arena
             game.player.health / 100.0,
             game.player.shoot_cooldown / PISTOL_COOLDOWN,
             game.player.angle / 360.0,
@@ -738,9 +798,10 @@ def main_agent_mode(model_path: str):
                 angle_to_zombie = math.degrees(math.atan2(-dy, dx)) % 360
                 is_in_bounds = 1.0 if is_zombie_in_bounds(zombie) else 0.0
                 
+                # Normalize zombie position relative to arena (for consistency with player)
                 state.extend([
-                    zombie.x / SCREEN_WIDTH,
-                    zombie.y / SCREEN_HEIGHT,
+                    (zombie.x - ARENA_X_OFFSET) / ARENA_WIDTH,
+                    (zombie.y - ARENA_Y_OFFSET) / ARENA_HEIGHT,
                     zombie.health / ZOMBIE_STRONG_HEALTH,
                     1.0 if zombie.zombie_type == 'strong' else 0.0,
                     min(distance / 1000.0, 1.0),
@@ -765,8 +826,8 @@ def main_agent_mode(model_path: str):
                 min(mg_dist / 1000.0, 1.0),
                 mg_angle / 360.0,
                 1.0,  # Exists
-                dx / SCREEN_WIDTH,  # Normalized dx
-                dy / SCREEN_HEIGHT,  # Normalized dy
+                dx / ARENA_WIDTH,  # Normalized dx (relative to arena)
+                dy / ARENA_HEIGHT,  # Normalized dy (relative to arena)
                 in_range
             ])
         else:
@@ -805,8 +866,8 @@ def main_agent_mode(model_path: str):
                 min(ammo_dist / 1000.0, 1.0),
                 ammo_angle / 360.0,
                 1.0,  # Exists
-                dx / SCREEN_WIDTH,  # Normalized dx
-                dy / SCREEN_HEIGHT,  # Normalized dy
+                dx / ARENA_WIDTH,  # Normalized dx (relative to arena)
+                dy / ARENA_HEIGHT,  # Normalized dy (relative to arena)
                 in_range
             ])
         else:
@@ -919,9 +980,9 @@ def main_agent_mode(model_path: str):
                         game.bullets.append(Bullet(game.player.x, game.player.y, game.player.angle, "pistol"))
                         game.player.shoot_cooldown = PISTOL_COOLDOWN
             
-            # Keep player on screen
-            game.player.x = max(0, min(SCREEN_WIDTH, game.player.x))
-            game.player.y = max(0, min(SCREEN_HEIGHT, game.player.y))
+            # Keep player within arena bounds (glass borders prevent movement outside)
+            game.player.x = max(ARENA_X_OFFSET, min(ARENA_X_OFFSET + ARENA_WIDTH, game.player.x))
+            game.player.y = max(ARENA_Y_OFFSET, min(ARENA_Y_OFFSET + ARENA_HEIGHT, game.player.y))
             
             # Update cooldown
             if game.player.shoot_cooldown > 0:
@@ -1027,10 +1088,44 @@ def main_agent_mode(model_path: str):
                       f"Wave: {game.wave}, Weapon: {game.player.weapon}")
         
         # Draw everything with FULL ASSETS
+        # Fill expanded screen background
+        screen.fill(BG_COLOR)
+        
+        # Draw arena background (playable area)
+        arena_rect = pygame.Rect(
+            ARENA_X_OFFSET,
+            ARENA_Y_OFFSET,
+            ARENA_WIDTH,
+            ARENA_HEIGHT
+        )
         if background_img:
-            screen.blit(background_img, (0, 0))
+            screen.blit(background_img, (ARENA_X_OFFSET, ARENA_Y_OFFSET))
         else:
-            screen.fill(BG_COLOR)
+            pygame.draw.rect(screen, (80, 80, 80), arena_rect)
+        
+        # Draw glass borders around the arena (only on left and right sides as requested)
+        glass_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        
+        # Left glass border (full height of arena)
+        left_border = pygame.Rect(
+            ARENA_X_OFFSET - GLASS_BORDER_THICKNESS,
+            ARENA_Y_OFFSET,
+            GLASS_BORDER_THICKNESS,
+            ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, GLASS_COLOR, left_border)
+        
+        # Right glass border (full height of arena)
+        right_border = pygame.Rect(
+            ARENA_X_OFFSET + ARENA_WIDTH,
+            ARENA_Y_OFFSET,
+            GLASS_BORDER_THICKNESS,
+            ARENA_HEIGHT
+        )
+        pygame.draw.rect(glass_surface, GLASS_COLOR, right_border)
+        
+        # Blit the glass surface onto the screen
+        screen.blit(glass_surface, (0, 0))
         
         game.player.draw(screen)
         for zombie in game.zombies:
