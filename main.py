@@ -39,8 +39,8 @@ ARENA_WIDTH = 800
 ARENA_HEIGHT = 600
 
 # Expanded screen size (visible area, larger than arena)
-SCREEN_WIDTH = 1000  # Expanded to show area around arena
-SCREEN_HEIGHT = 800  # Expanded to show area around arena
+SCREEN_WIDTH = 850  # Expanded to show area around arena
+SCREEN_HEIGHT = 650  # Expanded to show area around arena
 
 # Glass border configuration
 GLASS_BORDER_THICKNESS = 5  # Thickness of glass border in pixels
