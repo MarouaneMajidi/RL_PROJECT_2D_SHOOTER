@@ -12,7 +12,7 @@ from typing import Dict, List
 import statistics
 
 
-def load_player_data(player_id: str, data_dir: str = "evaluation_data") -> Dict:
+def load_player_data(player_id: str, data_dir: str = "data/evaluation") -> Dict:
     """Load all data for a specific player."""
     player_data = {
         'player_id': player_id,
@@ -54,7 +54,7 @@ def load_player_data(player_id: str, data_dir: str = "evaluation_data") -> Dict:
     return player_data
 
 
-def get_all_players(data_dir: str = "evaluation_data") -> List[str]:
+def get_all_players(data_dir: str = "data/evaluation") -> List[str]:
     """Get list of all player IDs from collected data."""
     player_ids = set()
     
@@ -188,7 +188,7 @@ def analyze_subjective_answers(all_players_data: List[Dict]) -> Dict:
     return analysis
 
 
-def generate_report(data_dir: str = "evaluation_data", output_file: str = "evaluation_report.txt"):
+def generate_report(data_dir: str = "data/evaluation", output_file: str = "evaluation_report.txt"):
     """Generate a comprehensive evaluation report."""
     print("Generating evaluation report...")
     
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Analyze DDA evaluation metrics")
-    parser.add_argument("--data-dir", default="evaluation_data", help="Directory containing evaluation data")
+    parser.add_argument("--data-dir", default="data/evaluation", help="Directory containing evaluation data")
     parser.add_argument("--output", default="evaluation_report.txt", help="Output report file")
     
     args = parser.parse_args()

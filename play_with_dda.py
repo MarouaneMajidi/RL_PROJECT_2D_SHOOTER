@@ -15,7 +15,7 @@ from pygame.locals import *
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
+from agents.dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
 
 # Asset constants
 ASSET_DIR = os.path.join(os.path.dirname(__file__), "assets")

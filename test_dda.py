@@ -15,8 +15,8 @@ from pygame.locals import *
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
-from ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
+from agents.dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
+from agents.ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
 
 # Colors for UI
 WHITE = (255, 255, 255)

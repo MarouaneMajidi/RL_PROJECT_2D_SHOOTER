@@ -9,10 +9,11 @@ import sys
 import argparse
 import numpy as np
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
-from ppo_agent import PPOAgent, ZombieShooterEnv, PPOConfig
+from agents.ppo_agent import PPOAgent, ZombieShooterEnv, PPOConfig
 
 
 def test_agent(model_path: str, num_episodes: int = 10, render: bool = True, deterministic: bool = True):

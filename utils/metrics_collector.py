@@ -16,7 +16,7 @@ import numpy as np
 class MetricsCollector:
     """Collects and stores metrics for DDA evaluation."""
     
-    def __init__(self, player_id: str, match_number: int, condition: str, output_dir: str = "evaluation_data"):
+    def __init__(self, player_id: str, match_number: int, condition: str, output_dir: str = "data/evaluation"):
         """
         Initialize metrics collector.
         

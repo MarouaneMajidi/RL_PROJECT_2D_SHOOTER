@@ -21,9 +21,10 @@ from typing import Dict
 from pygame.locals import *
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(__file__))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
-from metrics_collector import MetricsCollector
+from utils.metrics_collector import MetricsCollector
 
 # Import game classes from main.py
 # Import as a module to avoid conflicts with main() function
@@ -32,7 +33,7 @@ from main import GameState, Player, Zombie, Bullet, KnifeAttack, Pickup, spawn_z
 
 # Import DDA components (optional)
 try:
-    from dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
+    from agents.dda_agent import DDAAgent, DDAConfig, DDAStateExtractor, DifficultyManager
     DDA_AVAILABLE = True
 except ImportError:
     DDA_AVAILABLE = False
@@ -676,7 +677,7 @@ def run_match_with_dda(player_id, match_number, collector, dda_model_path):
 def run_match(player_id, match_number, condition, dda_model_path=None):
     """Run a single match."""
     # Initialize metrics collector
-    collector = MetricsCollector(player_id, match_number, condition)
+    collector = MetricsCollector(player_id, match_number, condition, output_dir=os.path.join(project_root, "data/evaluation"))
     collector.start_match()
     
     if condition == "with_dda":
@@ -755,7 +756,7 @@ def main():
     wait_for_key(screen, "Match 1 - Press ENTER to start")
     
     # Run Match 1
-    dda_model_path = "checkpoints/dda/best_dda_model.pth" if match1_condition == "with_dda" else None
+    dda_model_path = os.path.join(project_root, "checkpoints/dda/best_dda_model.pth") if match1_condition == "with_dda" else None
     consolidated_metrics1, consolidated_frames1 = run_match(player_id, 1, match1_condition, dda_model_path)
     print(f"\nMatch 1 completed! Data saved to consolidated files.")
     
@@ -767,7 +768,7 @@ def main():
     difficulty1 = ask_question(screen, "Le jeu était-il trop facile, trop difficile, ou équilibré ?", 1, 5)
     
     # Save answers
-    append_to_consolidated_file("evaluation_data", "all_answers.json", {
+    append_to_consolidated_file("data/evaluation", "all_answers.json", {
         'player_id': player_id,
         'match_number': 1,
         'condition': match1_condition,
@@ -780,7 +781,7 @@ def main():
     wait_for_key(screen, "Match 2 - Press ENTER to start")
     
     # Run Match 2
-    dda_model_path = "checkpoints/dda/best_dda_model.pth" if match2_condition == "with_dda" else None
+    dda_model_path = os.path.join(project_root, "checkpoints/dda/best_dda_model.pth") if match2_condition == "with_dda" else None
     consolidated_metrics2, consolidated_frames2 = run_match(player_id, 2, match2_condition, dda_model_path)
     print(f"\nMatch 2 completed! Data saved to consolidated files.")
     
@@ -792,7 +793,7 @@ def main():
     difficulty2 = ask_question(screen, "Le jeu était-il trop facile, trop difficile, ou équilibré ?", 1, 5)
     
     # Save answers
-    append_to_consolidated_file("evaluation_data", "all_answers.json", {
+    append_to_consolidated_file("data/evaluation", "all_answers.json", {
         'player_id': player_id,
         'match_number': 2,
         'condition': match2_condition,
@@ -816,7 +817,7 @@ def main():
         preferred_condition = "no_preference"
     
     # Save preference
-    append_to_consolidated_file("evaluation_data", "all_preferences.json", {
+    append_to_consolidated_file("data/evaluation", "all_preferences.json", {
         'player_id': player_id,
         'match1_condition': match1_condition,
         'match2_condition': match2_condition,
@@ -832,7 +833,7 @@ def main():
     print(f"Match 1: {match1_condition}")
     print(f"Match 2: {match2_condition}")
     print(f"Preference: {preferred_condition}")
-    print(f"\nAll data saved to evaluation_data/")
+    print(f"\nAll data saved to data/evaluation/")
     print(f"- all_metrics.json (all metrics from all players)")
     print(f"- all_frames.json (all frame data from all players)")
     print(f"- all_answers.json (all answers from all players)")

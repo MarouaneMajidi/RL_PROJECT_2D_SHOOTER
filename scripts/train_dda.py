@@ -13,8 +13,12 @@ from typing import Optional
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
-from dda_agent import DDAAgent, DDAConfig, DDAEnvironment, DifficultyManager
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
+from agents.ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
+from agents.dda_agent import DDAAgent, DDAConfig, DDAEnvironment, DifficultyManager
 
 
 def get_base_params():
@@ -36,7 +40,7 @@ def get_base_params():
 
 
 def train_dda(
-    player_model_path: str = "checkpoints/best_model.pth",
+    player_model_path: str = os.path.join(project_root, "checkpoints/best_model.pth"),
     dda_config: Optional[DDAConfig] = None,
     checkpoint_path: Optional[str] = None,
     render: bool = False
@@ -199,7 +203,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Train DDA Agent")
-    parser.add_argument('--player-model', type=str, default='checkpoints/best_model.pth',
+    parser.add_argument('--player-model', type=str, default=os.path.join(project_root, 'checkpoints/best_model.pth'),
                        help='Path to trained player agent model')
     parser.add_argument('--checkpoint', type=str, default=None,
                        help='Path to DDA checkpoint to resume from')
