@@ -388,56 +388,6 @@ Toutes les données sont sauvegardées dans `data/evaluation/` :
 
 ---
 
-## 8. Analyser les Métriques (`utils/analyze_metrics.py`)
-
-Analyser les métriques collectées lors des sessions de test d'évaluation.
-
-### Commandes de Base
-
-```bash
-# Analyse avec répertoire par défaut
-python utils/analyze_metrics.py
-
-# Analyse avec répertoire spécifique
-python utils/analyze_metrics.py --data-dir data/evaluation
-
-# Générer un rapport avec nom personnalisé
-python utils/analyze_metrics.py --output mon_rapport.txt
-```
-
-### Options Disponibles
-
-| Option | Description | Valeur par défaut |
-|--------|-------------|-------------------|
-| `--data-dir` | Répertoire contenant les données d'évaluation | `data/evaluation` |
-| `--output` | Fichier de sortie pour le rapport | `evaluation_report.txt` |
-| `--help` | Afficher l'aide | - |
-
-### Exemples
-
-```bash
-# Analyse standard
-python utils/analyze_metrics.py
-
-# Analyse avec répertoire personnalisé
-python utils/analyze_metrics.py --data-dir data/evaluation
-
-# Générer un rapport avec nom spécifique
-python utils/analyze_metrics.py --output rapport_dda_2024.txt
-
-# Analyse complète
-python utils/analyze_metrics.py --data-dir data/evaluation --output rapport_complet.txt
-```
-
-### Rapport Généré
-
-Le script génère un rapport contenant :
-- Statistiques descriptives pour chaque métrique
-- Comparaisons entre conditions (avec/sans DDA)
-- Tests statistiques (si applicable)
-- Visualisations (si applicable)
-
----
 
 ## 🚀 Workflow Recommandé
 
@@ -477,8 +427,6 @@ python test_dda.py --mode manual
 # Lancer des sessions de test
 python scripts/test_session.py
 
-# Analyser les résultats
-python utils/analyze_metrics.py
 ```
 
 ---
