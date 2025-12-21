@@ -1,0 +1,122 @@
+[
+  {
+    "time": 0.00212,
+    "player_health": 100,
+    "zombies_alive": 0,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 0
+  },
+  {
+    "time": 1.015928,
+    "player_health": 100,
+    "zombies_alive": 1,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 0
+  },
+  {
+    "time": 2.026891,
+    "player_health": 100,
+    "zombies_alive": 2,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 0
+  },
+  {
+    "time": 3.038424,
+    "player_health": 100,
+    "zombies_alive": 2,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 10
+  },
+  {
+    "time": 4.039179,
+    "player_health": 100,
+    "zombies_alive": 3,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 10
+  },
+  {
+    "time": 5.054625,
+    "player_health": 100,
+    "zombies_alive": 3,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 20
+  },
+  {
+    "time": 6.054356,
+    "player_health": 100,
+    "zombies_alive": 3,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 30
+  },
+  {
+    "time": 7.055362,
+    "player_health": 100,
+    "zombies_alive": 3,
+    "player_x": 425,
+    "player_y": 325,
+    "score": 40
+  },
+  {
+    "time": 8.070135,
+    "player_health": 100,
+    "zombies_alive": 4,
+    "player_x": 580.0,
+    "player_y": 425.0,
+    "score": 40
+  },
+  {
+    "time": 9.070686,
+    "player_health": 100,
+    "zombies_alive": 5,
+    "player_x": 570.0,
+    "player_y": 120.0,
+    "score": 40
+  },
+  {
+    "time": 10.072324,
+    "player_health": 100,
+    "zombies_alive": 6,
+    "player_x": 260.0,
+    "player_y": 120.0,
+    "score": 40
+  },
+  {
+    "time": 11.072921,
+    "player_health": 100,
+    "zombies_alive": 7,
+    "player_x": 245.0,
+    "player_y": 375.0,
+    "score": 40
+  },
+  {
+    "time": 12.072883,
+    "player_health": 100,
+    "zombies_alive": 8,
+    "player_x": 555.0,
+    "player_y": 315.0,
+    "score": 40
+  },
+  {
+    "time": 13.08321,
+    "player_health": 100,
+    "zombies_alive": 9,
+    "player_x": 570.0,
+    "player_y": 190.0,
+    "score": 40
+  },
+  {
+    "time": 14.095235,
+    "player_health": 70,
+    "zombies_alive": 10,
+    "player_x": 655.0,
+    "player_y": 465.0,
+    "score": 40
+  }
+]

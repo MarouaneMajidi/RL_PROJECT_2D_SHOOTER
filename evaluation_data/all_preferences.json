@@ -1,0 +1,10 @@
+[
+  {
+    "player_id": 6,
+    "match1_condition": "without_dda",
+    "match2_condition": "with_dda",
+    "preference": "match2",
+    "preferred_condition": "with_dda",
+    "timestamp": "2025-12-21T15:04:17.479738"
+  }
+]

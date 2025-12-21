@@ -1,0 +1,34 @@
+[
+  {
+    "player_id": 3,
+    "match_number": 1,
+    "condition": "without_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T14:39:35.397693"
+  },
+  {
+    "player_id": 5,
+    "match_number": 1,
+    "condition": "with_dda",
+    "enjoyment": 3,
+    "difficulty": 2,
+    "timestamp": "2025-12-21T14:51:25.821672"
+  },
+  {
+    "player_id": 6,
+    "match_number": 1,
+    "condition": "without_dda",
+    "enjoyment": 3,
+    "difficulty": 4,
+    "timestamp": "2025-12-21T15:02:04.740517"
+  },
+  {
+    "player_id": 6,
+    "match_number": 2,
+    "condition": "with_dda",
+    "enjoyment": 4,
+    "difficulty": 2,
+    "timestamp": "2025-12-21T15:04:12.186076"
+  }
+]

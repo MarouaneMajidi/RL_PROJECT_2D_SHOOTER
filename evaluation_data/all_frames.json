@@ -1,0 +1,2314 @@
+[
+  {
+    "player_id": 3,
+    "match_number": 1,
+    "condition": "without_dda",
+    "timestamp": "2025-12-21T14:39:26.996576",
+    "frames": [
+      {
+        "time": 0.00212,
+        "player_health": 100,
+        "zombies_alive": 0,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 1.015928,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 2.026891,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 3.038424,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 10
+      },
+      {
+        "time": 4.039179,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 10
+      },
+      {
+        "time": 5.054625,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 20
+      },
+      {
+        "time": 6.054356,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 30
+      },
+      {
+        "time": 7.055362,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 40
+      },
+      {
+        "time": 8.070135,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 580.0,
+        "player_y": 425.0,
+        "score": 40
+      },
+      {
+        "time": 9.070686,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 570.0,
+        "player_y": 120.0,
+        "score": 40
+      },
+      {
+        "time": 10.072324,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 260.0,
+        "player_y": 120.0,
+        "score": 40
+      },
+      {
+        "time": 11.072921,
+        "player_health": 100,
+        "zombies_alive": 7,
+        "player_x": 245.0,
+        "player_y": 375.0,
+        "score": 40
+      },
+      {
+        "time": 12.072883,
+        "player_health": 100,
+        "zombies_alive": 8,
+        "player_x": 555.0,
+        "player_y": 315.0,
+        "score": 40
+      },
+      {
+        "time": 13.08321,
+        "player_health": 100,
+        "zombies_alive": 9,
+        "player_x": 570.0,
+        "player_y": 190.0,
+        "score": 40
+      },
+      {
+        "time": 14.095235,
+        "player_health": 70,
+        "zombies_alive": 10,
+        "player_x": 655.0,
+        "player_y": 465.0,
+        "score": 40
+      }
+    ]
+  },
+  {
+    "player_id": 5,
+    "match_number": 1,
+    "condition": "with_dda",
+    "timestamp": "2025-12-21T14:51:14.939963",
+    "frames": [
+      {
+        "time": 0.597412,
+        "player_health": 100,
+        "zombies_alive": 0,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 1.611364,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 2.624369,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 245.0,
+        "score": 0
+      },
+      {
+        "time": 3.638346,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 245.0,
+        "score": 10
+      },
+      {
+        "time": 4.646712,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 245.0,
+        "score": 20
+      },
+      {
+        "time": 5.661027,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 371.1749999999996,
+        "score": 30
+      },
+      {
+        "time": 6.660496,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 162.37500000000068,
+        "player_y": 385.49999999999955,
+        "score": 40
+      },
+      {
+        "time": 7.673796,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 310.40000000000055,
+        "player_y": 552.6249999999987,
+        "score": 40
+      },
+      {
+        "time": 8.688489,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 396.35000000000014,
+        "player_y": 552.6249999999987,
+        "score": 50
+      },
+      {
+        "time": 9.700894,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 133.72500000000065,
+        "player_y": 509.64999999999895,
+        "score": 50
+      },
+      {
+        "time": 10.715771,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 235.33700000000067,
+        "player_y": 215.48612500000033,
+        "score": 60
+      },
+      {
+        "time": 11.729174,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 522.624874999999,
+        "player_y": 156.20450000000034,
+        "score": 70
+      },
+      {
+        "time": 12.740156,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 522.624874999999,
+        "player_y": 443.49237499999913,
+        "score": 70
+      },
+      {
+        "time": 13.755014,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 249.01737500000064,
+        "player_y": 562.0556249999984,
+        "score": 80
+      },
+      {
+        "time": 14.77039,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 276.3781250000005,
+        "player_y": 470.85312499999895,
+        "score": 100
+      },
+      {
+        "time": 15.773229,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 549.8716218750004,
+        "player_y": 530.1347499999986,
+        "score": 110
+      },
+      {
+        "time": 16.786697,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 541.1617831250004,
+        "player_y": 547.5544274999986,
+        "score": 120
+      },
+      {
+        "time": 17.802971,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 266.80186249999986,
+        "player_y": 586.7487018749987,
+        "score": 130
+      },
+      {
+        "time": 18.813484,
+        "player_health": 90,
+        "zombies_alive": 6,
+        "player_x": 188.4133137499997,
+        "player_y": 321.09861999999816,
+        "score": 140
+      },
+      {
+        "time": 19.824689,
+        "player_health": 90,
+        "zombies_alive": 7,
+        "player_x": 462.77323437500024,
+        "player_y": 277.5494262499981,
+        "score": 140
+      },
+      {
+        "time": 20.837655,
+        "player_health": 90,
+        "zombies_alive": 6,
+        "player_x": 607.8138241593748,
+        "player_y": 459.58505612499744,
+        "score": 160
+      },
+      {
+        "time": 21.85235,
+        "player_health": 90,
+        "zombies_alive": 5,
+        "player_x": 343.86216084062573,
+        "player_y": 559.7046525562471,
+        "score": 180
+      },
+      {
+        "time": 22.853762,
+        "player_health": 70,
+        "zombies_alive": 5,
+        "player_x": 225.53900142187615,
+        "player_y": 625,
+        "score": 190
+      },
+      {
+        "time": 23.866521,
+        "player_health": 50,
+        "zombies_alive": 6,
+        "player_x": 512.2451184750001,
+        "player_y": 529.4312943156253,
+        "score": 190
+      },
+      {
+        "time": 24.866534,
+        "player_health": 50,
+        "zombies_alive": 7,
+        "player_x": 387.3231674732816,
+        "player_y": 245.22816717328237,
+        "score": 190
+      },
+      {
+        "time": 25.868147,
+        "player_health": 50,
+        "zombies_alive": 8,
+        "player_x": 92.47095598325006,
+        "player_y": 311.8076988000637,
+        "score": 190
+      },
+      {
+        "time": 26.867838,
+        "player_health": 50,
+        "zombies_alive": 10,
+        "player_x": 116.24936013567196,
+        "player_y": 592.3928677986421,
+        "score": 190
+      },
+      {
+        "time": 27.879935,
+        "player_health": 55,
+        "zombies_alive": 10,
+        "player_x": 415.8572524561879,
+        "player_y": 497.2792511889545,
+        "score": 200
+      },
+      {
+        "time": 28.89464,
+        "player_health": 55,
+        "zombies_alive": 11,
+        "player_x": 715.4651447767038,
+        "player_y": 397.4099537487825,
+        "score": 200
+      },
+      {
+        "time": 29.906697,
+        "player_health": 55,
+        "zombies_alive": 10,
+        "player_x": 710.4954583088477,
+        "player_y": 545.0025083228646,
+        "score": 220
+      },
+      {
+        "time": 30.917328,
+        "player_health": 55,
+        "zombies_alive": 9,
+        "player_x": 427.22332964104714,
+        "player_y": 625,
+        "score": 240
+      },
+      {
+        "time": 31.917727,
+        "player_health": 55,
+        "zombies_alive": 7,
+        "player_x": 153.89057390895832,
+        "player_y": 396.3944224786171,
+        "score": 270
+      },
+      {
+        "time": 32.927346,
+        "player_health": 55,
+        "zombies_alive": 7,
+        "player_x": 193.64806565180774,
+        "player_y": 83.30417500367882,
+        "score": 280
+      },
+      {
+        "time": 33.929019,
+        "player_health": 55,
+        "zombies_alive": 8,
+        "player_x": 491.8292537231771,
+        "player_y": 25,
+        "score": 280
+      },
+      {
+        "time": 34.930331,
+        "player_health": 55,
+        "zombies_alive": 9,
+        "player_x": 807.777070917131,
+        "player_y": 286.2812660475385,
+        "score": 280
+      },
+      {
+        "time": 35.941766,
+        "player_health": 55,
+        "zombies_alive": 10,
+        "player_x": 610.4308212785642,
+        "player_y": 540.754061634114,
+        "score": 280
+      },
+      {
+        "time": 36.956755,
+        "player_health": 80,
+        "zombies_alive": 10,
+        "player_x": 283.2515126672534,
+        "player_y": 483.6275156861075,
+        "score": 290
+      },
+      {
+        "time": 37.957185,
+        "player_health": 80,
+        "zombies_alive": 10,
+        "player_x": 25,
+        "player_y": 483.6275156861075,
+        "score": 300
+      },
+      {
+        "time": 38.970968,
+        "player_health": 80,
+        "zombies_alive": 8,
+        "player_x": 82.12654594800667,
+        "player_y": 229.15472009953163,
+        "score": 330
+      },
+      {
+        "time": 39.970965,
+        "player_health": 80,
+        "zombies_alive": 8,
+        "player_x": 392.89495590516265,
+        "player_y": 141.56933851651937,
+        "score": 340
+      },
+      {
+        "time": 40.985402,
+        "player_health": 60,
+        "zombies_alive": 7,
+        "player_x": 616.0779842793072,
+        "player_y": 320.1157612158347,
+        "score": 360
+      },
+      {
+        "time": 41.99911,
+        "player_health": 60,
+        "zombies_alive": 7,
+        "player_x": 412.73344731619767,
+        "player_y": 518.5006753261845,
+        "score": 370
+      },
+      {
+        "time": 43.001349,
+        "player_health": 60,
+        "zombies_alive": 7,
+        "player_x": 134.99456756170744,
+        "player_y": 483.78331535687323,
+        "score": 380
+      },
+      {
+        "time": 44.014671,
+        "player_health": 60,
+        "zombies_alive": 5,
+        "player_x": 338.33910452481655,
+        "player_y": 295.31764695204106,
+        "score": 410
+      },
+      {
+        "time": 45.030384,
+        "player_health": 60,
+        "zombies_alive": 6,
+        "player_x": 664.6326920078154,
+        "player_y": 326.41448223883833,
+        "score": 410
+      },
+      {
+        "time": 46.03099,
+        "player_health": 65,
+        "zombies_alive": 6,
+        "player_x": 643.9014684832837,
+        "player_y": 625,
+        "score": 420
+      },
+      {
+        "time": 47.046312,
+        "player_health": 65,
+        "zombies_alive": 5,
+        "player_x": 317.3846979719109,
+        "player_y": 625,
+        "score": 440
+      },
+      {
+        "time": 48.061262,
+        "player_health": 65,
+        "zombies_alive": 5,
+        "player_x": 58.24440391526585,
+        "player_y": 505.7954647339426,
+        "score": 450
+      },
+      {
+        "time": 49.062031,
+        "player_health": 65,
+        "zombies_alive": 4,
+        "player_x": 206.16168376279884,
+        "player_y": 604.2687764754683,
+        "score": 470
+      },
+      {
+        "time": 50.076923,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 547.3717089471844,
+        "player_y": 604.2687764754683,
+        "score": 480
+      },
+      {
+        "time": 51.076447,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 699.0206090291337,
+        "player_y": 468.8679728308707,
+        "score": 490
+      },
+      {
+        "time": 52.091061,
+        "player_health": 5,
+        "zombies_alive": 5,
+        "player_x": 357.81058384474784,
+        "player_y": 539.2763907260614,
+        "score": 490
+      },
+      {
+        "time": 53.105783,
+        "player_health": 30,
+        "zombies_alive": 6,
+        "player_x": 108.6731051386891,
+        "player_y": 344.29923347784097,
+        "score": 490
+      },
+      {
+        "time": 54.107769,
+        "player_health": 30,
+        "zombies_alive": 6,
+        "player_x": 412.64790932080905,
+        "player_y": 208.89842983324368,
+        "score": 500
+      },
+      {
+        "time": 55.117803,
+        "player_health": 30,
+        "zombies_alive": 6,
+        "player_x": 605.07953146051,
+        "player_y": 554.1433989662366,
+        "score": 510
+      },
+      {
+        "time": 56.117621,
+        "player_health": 55,
+        "zombies_alive": 5,
+        "player_x": 299.45283747392614,
+        "player_y": 619.3402464076559,
+        "score": 530
+      },
+      {
+        "time": 57.132754,
+        "player_health": 45,
+        "zombies_alive": 6,
+        "player_x": 174.93825844235494,
+        "player_y": 262.7757700899747,
+        "score": 530
+      },
+      {
+        "time": 58.144831,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 503.2039667983154,
+        "player_y": 109.9624230966827,
+        "score": 550
+      },
+      {
+        "time": 59.157633,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 644.9524955185746,
+        "player_y": 465.1402597842394,
+        "score": 560
+      },
+      {
+        "time": 60.162412,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 485.26254791058346,
+        "player_y": 625,
+        "score": 570
+      },
+      {
+        "time": 61.174488,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 112.65267015860647,
+        "player_y": 625,
+        "score": 580
+      },
+      {
+        "time": 62.18519,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 53.50824511860996,
+        "player_y": 625,
+        "score": 590
+      },
+      {
+        "time": 63.196781,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 53.50824511860996,
+        "player_y": 447.5667248800102,
+        "score": 600
+      },
+      {
+        "time": 64.211387,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 53.50824511860996,
+        "player_y": 447.5667248800102,
+        "score": 610
+      },
+      {
+        "time": 65.223564,
+        "player_health": 45,
+        "zombies_alive": 5,
+        "player_x": 189.4812782855617,
+        "player_y": 175.62065854610626,
+        "score": 610
+      },
+      {
+        "time": 66.238756,
+        "player_health": 45,
+        "zombies_alive": 4,
+        "player_x": 554.13623086966,
+        "player_y": 293.0519144630191,
+        "score": 620
+      },
+      {
+        "time": 67.250161,
+        "player_health": 35,
+        "zombies_alive": 3,
+        "player_x": 430.5243825360675,
+        "player_y": 620.6233125470393,
+        "score": 640
+      },
+      {
+        "time": 68.264076,
+        "player_health": 15,
+        "zombies_alive": 3,
+        "player_x": 288.37075695243567,
+        "player_y": 297.84187358594585,
+        "score": 650
+      },
+      {
+        "time": 69.264487,
+        "player_health": 15,
+        "zombies_alive": 3,
+        "player_x": 675.8939014782477,
+        "player_y": 45.95182964416729,
+        "score": 660
+      },
+      {
+        "time": 70.278467,
+        "player_health": 15,
+        "zombies_alive": 3,
+        "player_x": 798.6095639114209,
+        "player_y": 414.0988169436899,
+        "score": 670
+      },
+      {
+        "time": 71.292355,
+        "player_health": 15,
+        "zombies_alive": 3,
+        "player_x": 540.2608008942142,
+        "player_y": 618.5412809245698,
+        "score": 670
+      },
+      {
+        "time": 72.305812,
+        "player_health": 40,
+        "zombies_alive": 3,
+        "player_x": 436.9212956873308,
+        "player_y": 211.64197917246662,
+        "score": 680
+      },
+      {
+        "time": 73.318735,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 816.1772797965915,
+        "player_y": 209.25225311455716,
+        "score": 690
+      },
+      {
+        "time": 74.320969,
+        "player_health": 20,
+        "zombies_alive": 4,
+        "player_x": 640.6938825171529,
+        "player_y": 607.4645777102063,
+        "score": 690
+      },
+      {
+        "time": 75.335742,
+        "player_health": 20,
+        "zombies_alive": 4,
+        "player_x": 215.4841121862056,
+        "player_y": 607.4645777102063,
+        "score": 700
+      },
+      {
+        "time": 76.346321,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 188.48666645090736,
+        "player_y": 607.4645777102063,
+        "score": 710
+      },
+      {
+        "time": 77.346083,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 188.48666645090736,
+        "player_y": 492.72543333518877,
+        "score": 720
+      },
+      {
+        "time": 78.359405,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 188.48666645090736,
+        "player_y": 492.72543333518877,
+        "score": 730
+      },
+      {
+        "time": 79.374633,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 188.48666645090736,
+        "player_y": 238.81445619470904,
+        "score": 740
+      },
+      {
+        "time": 80.38784,
+        "player_health": 20,
+        "zombies_alive": 2,
+        "player_x": 280.1767415294142,
+        "player_y": 168.2836292112422,
+        "score": 750
+      },
+      {
+        "time": 81.40302,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 477.6630570831206,
+        "player_y": 316.39836587652235,
+        "score": 750
+      },
+      {
+        "time": 82.417309,
+        "player_health": 20,
+        "zombies_alive": 4,
+        "player_x": 789.7345865082667,
+        "player_y": 506.8315987318821,
+        "score": 750
+      },
+      {
+        "time": 83.430439,
+        "player_health": 20,
+        "zombies_alive": 5,
+        "player_x": 330.473106605424,
+        "player_y": 506.8315987318821,
+        "score": 750
+      },
+      {
+        "time": 84.444085,
+        "player_health": 20,
+        "zombies_alive": 5,
+        "player_x": 94.6180211727109,
+        "player_y": 558.4248986702877,
+        "score": 750
+      },
+      {
+        "time": 85.455402,
+        "player_health": 20,
+        "zombies_alive": 3,
+        "player_x": 197.80462104952284,
+        "player_y": 492.3315144440997,
+        "score": 780
+      },
+      {
+        "time": 86.469496,
+        "player_health": 10,
+        "zombies_alive": 3,
+        "player_x": 25,
+        "player_y": 492.3315144440997,
+        "score": 790
+      }
+    ]
+  },
+  {
+    "player_id": 6,
+    "match_number": 1,
+    "condition": "without_dda",
+    "timestamp": "2025-12-21T15:01:57.825237",
+    "frames": [
+      {
+        "time": 0.000144,
+        "player_health": 100,
+        "zombies_alive": 0,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 1.000865,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 2.014137,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 295,
+        "score": 0
+      },
+      {
+        "time": 3.029369,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 400,
+        "player_y": 365,
+        "score": 0
+      },
+      {
+        "time": 4.038397,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 135,
+        "player_y": 365,
+        "score": 20
+      },
+      {
+        "time": 5.050996,
+        "player_health": 55,
+        "zombies_alive": 5,
+        "player_x": 25,
+        "player_y": 365,
+        "score": 50
+      },
+      {
+        "time": 6.052369,
+        "player_health": 45,
+        "zombies_alive": 6,
+        "player_x": 110,
+        "player_y": 625,
+        "score": 50
+      },
+      {
+        "time": 7.064851,
+        "player_health": 60,
+        "zombies_alive": 7,
+        "player_x": 305,
+        "player_y": 310,
+        "score": 50
+      },
+      {
+        "time": 8.070355,
+        "player_health": 60,
+        "zombies_alive": 8,
+        "player_x": 470,
+        "player_y": 465,
+        "score": 50
+      },
+      {
+        "time": 9.081633,
+        "player_health": 60,
+        "zombies_alive": 9,
+        "player_x": 700,
+        "player_y": 330,
+        "score": 70
+      },
+      {
+        "time": 10.084007,
+        "player_health": 60,
+        "zombies_alive": 10,
+        "player_x": 430,
+        "player_y": 175,
+        "score": 70
+      },
+      {
+        "time": 11.097938,
+        "player_health": 60,
+        "zombies_alive": 11,
+        "player_x": 150,
+        "player_y": 330,
+        "score": 110
+      },
+      {
+        "time": 12.109927,
+        "player_health": 60,
+        "zombies_alive": 12,
+        "player_x": 315,
+        "player_y": 590,
+        "score": 130
+      },
+      {
+        "time": 13.12238,
+        "player_health": 60,
+        "zombies_alive": 13,
+        "player_x": 630,
+        "player_y": 590,
+        "score": 150
+      },
+      {
+        "time": 14.13665,
+        "player_health": 60,
+        "zombies_alive": 14,
+        "player_x": 570,
+        "player_y": 625,
+        "score": 180
+      },
+      {
+        "time": 15.150834,
+        "player_health": 60,
+        "zombies_alive": 15,
+        "player_x": 300,
+        "player_y": 520,
+        "score": 200
+      },
+      {
+        "time": 16.162371,
+        "player_health": 100,
+        "zombies_alive": 16,
+        "player_x": 435,
+        "player_y": 225,
+        "score": 210
+      },
+      {
+        "time": 17.177223,
+        "player_health": 100,
+        "zombies_alive": 18,
+        "player_x": 750,
+        "player_y": 165,
+        "score": 210
+      },
+      {
+        "time": 18.191651,
+        "player_health": 100,
+        "zombies_alive": 19,
+        "player_x": 760,
+        "player_y": 480,
+        "score": 220
+      },
+      {
+        "time": 19.205397,
+        "player_health": 100,
+        "zombies_alive": 20,
+        "player_x": 445,
+        "player_y": 460,
+        "score": 260
+      },
+      {
+        "time": 20.206976,
+        "player_health": 100,
+        "zombies_alive": 21,
+        "player_x": 135,
+        "player_y": 395,
+        "score": 290
+      },
+      {
+        "time": 21.221501,
+        "player_health": 100,
+        "zombies_alive": 22,
+        "player_x": 290,
+        "player_y": 625,
+        "score": 300
+      },
+      {
+        "time": 22.222999,
+        "player_health": 90,
+        "zombies_alive": 23,
+        "player_x": 600,
+        "player_y": 460,
+        "score": 310
+      },
+      {
+        "time": 23.23546,
+        "player_health": 90,
+        "zombies_alive": 24,
+        "player_x": 710,
+        "player_y": 170,
+        "score": 310
+      },
+      {
+        "time": 24.248225,
+        "player_health": 70,
+        "zombies_alive": 26,
+        "player_x": 590,
+        "player_y": 465,
+        "score": 340
+      },
+      {
+        "time": 25.248581,
+        "player_health": 70,
+        "zombies_alive": 27,
+        "player_x": 280,
+        "player_y": 520,
+        "score": 360
+      },
+      {
+        "time": 26.257535,
+        "player_health": 70,
+        "zombies_alive": 28,
+        "player_x": 235,
+        "player_y": 205,
+        "score": 370
+      },
+      {
+        "time": 27.27159,
+        "player_health": 70,
+        "zombies_alive": 29,
+        "player_x": 480,
+        "player_y": 55,
+        "score": 380
+      },
+      {
+        "time": 28.285589,
+        "player_health": 70,
+        "zombies_alive": 30,
+        "player_x": 790,
+        "player_y": 355,
+        "score": 410
+      },
+      {
+        "time": 29.298326,
+        "player_health": 70,
+        "zombies_alive": 31,
+        "player_x": 625,
+        "player_y": 625,
+        "score": 430
+      },
+      {
+        "time": 30.309605,
+        "player_health": 70,
+        "zombies_alive": 32,
+        "player_x": 390,
+        "player_y": 475,
+        "score": 460
+      },
+      {
+        "time": 31.321432,
+        "player_health": 85,
+        "zombies_alive": 34,
+        "player_x": 525,
+        "player_y": 160,
+        "score": 470
+      },
+      {
+        "time": 32.333203,
+        "player_health": 85,
+        "zombies_alive": 35,
+        "player_x": 765,
+        "player_y": 355,
+        "score": 500
+      },
+      {
+        "time": 33.343641,
+        "player_health": 75,
+        "zombies_alive": 36,
+        "player_x": 570,
+        "player_y": 625,
+        "score": 530
+      },
+      {
+        "time": 34.355025,
+        "player_health": 75,
+        "zombies_alive": 37,
+        "player_x": 255,
+        "player_y": 625,
+        "score": 530
+      },
+      {
+        "time": 35.367207,
+        "player_health": 75,
+        "zombies_alive": 38,
+        "player_x": 50,
+        "player_y": 430,
+        "score": 550
+      },
+      {
+        "time": 36.36781,
+        "player_health": 75,
+        "zombies_alive": 39,
+        "player_x": 360,
+        "player_y": 310,
+        "score": 580
+      },
+      {
+        "time": 37.382321,
+        "player_health": 75,
+        "zombies_alive": 40,
+        "player_x": 595,
+        "player_y": 500,
+        "score": 600
+      },
+      {
+        "time": 38.397635,
+        "player_health": 75,
+        "zombies_alive": 42,
+        "player_x": 355,
+        "player_y": 625,
+        "score": 630
+      },
+      {
+        "time": 39.397784,
+        "player_health": 75,
+        "zombies_alive": 43,
+        "player_x": 90,
+        "player_y": 345,
+        "score": 650
+      },
+      {
+        "time": 40.410185,
+        "player_health": 75,
+        "zombies_alive": 44,
+        "player_x": 190,
+        "player_y": 85,
+        "score": 650
+      },
+      {
+        "time": 41.423486,
+        "player_health": 75,
+        "zombies_alive": 45,
+        "player_x": 505,
+        "player_y": 25,
+        "score": 650
+      },
+      {
+        "time": 42.433235,
+        "player_health": 75,
+        "zombies_alive": 47,
+        "player_x": 785,
+        "player_y": 310,
+        "score": 650
+      },
+      {
+        "time": 43.445039,
+        "player_health": 75,
+        "zombies_alive": 48,
+        "player_x": 545,
+        "player_y": 570,
+        "score": 660
+      },
+      {
+        "time": 44.456095,
+        "player_health": 100,
+        "zombies_alive": 49,
+        "player_x": 230,
+        "player_y": 455,
+        "score": 670
+      },
+      {
+        "time": 45.46898,
+        "player_health": 80,
+        "zombies_alive": 50,
+        "player_x": 300,
+        "player_y": 150,
+        "score": 700
+      },
+      {
+        "time": 46.480239,
+        "player_health": 80,
+        "zombies_alive": 52,
+        "player_x": 615,
+        "player_y": 320,
+        "score": 730
+      },
+      {
+        "time": 47.482345,
+        "player_health": 80,
+        "zombies_alive": 53,
+        "player_x": 510,
+        "player_y": 510,
+        "score": 740
+      },
+      {
+        "time": 48.482232,
+        "player_health": 100,
+        "zombies_alive": 55,
+        "player_x": 200,
+        "player_y": 345,
+        "score": 760
+      },
+      {
+        "time": 49.495225,
+        "player_health": 90,
+        "zombies_alive": 56,
+        "player_x": 240,
+        "player_y": 30,
+        "score": 790
+      },
+      {
+        "time": 50.507471,
+        "player_health": 70,
+        "zombies_alive": 57,
+        "player_x": 555,
+        "player_y": 205,
+        "score": 800
+      },
+      {
+        "time": 51.51824,
+        "player_health": 70,
+        "zombies_alive": 59,
+        "player_x": 545,
+        "player_y": 520,
+        "score": 800
+      },
+      {
+        "time": 52.53267,
+        "player_health": 70,
+        "zombies_alive": 60,
+        "player_x": 235,
+        "player_y": 450,
+        "score": 820
+      },
+      {
+        "time": 53.544819,
+        "player_health": 100,
+        "zombies_alive": 62,
+        "player_x": 330,
+        "player_y": 135,
+        "score": 850
+      },
+      {
+        "time": 54.547048,
+        "player_health": 100,
+        "zombies_alive": 63,
+        "player_x": 550,
+        "player_y": 270,
+        "score": 870
+      },
+      {
+        "time": 55.546813,
+        "player_health": 90,
+        "zombies_alive": 65,
+        "player_x": 380,
+        "player_y": 455,
+        "score": 890
+      },
+      {
+        "time": 56.561619,
+        "player_health": 100,
+        "zombies_alive": 67,
+        "player_x": 90,
+        "player_y": 385,
+        "score": 900
+      },
+      {
+        "time": 57.573458,
+        "player_health": 90,
+        "zombies_alive": 68,
+        "player_x": 360,
+        "player_y": 175,
+        "score": 900
+      },
+      {
+        "time": 58.587696,
+        "player_health": 100,
+        "zombies_alive": 70,
+        "player_x": 485,
+        "player_y": 475,
+        "score": 910
+      },
+      {
+        "time": 59.602853,
+        "player_health": 100,
+        "zombies_alive": 72,
+        "player_x": 225,
+        "player_y": 625,
+        "score": 920
+      },
+      {
+        "time": 60.615477,
+        "player_health": 80,
+        "zombies_alive": 73,
+        "player_x": 455,
+        "player_y": 520,
+        "score": 940
+      },
+      {
+        "time": 61.629646,
+        "player_health": 80,
+        "zombies_alive": 75,
+        "player_x": 605,
+        "player_y": 260,
+        "score": 940
+      },
+      {
+        "time": 62.644281,
+        "player_health": 100,
+        "zombies_alive": 77,
+        "player_x": 290,
+        "player_y": 305,
+        "score": 940
+      },
+      {
+        "time": 63.64416,
+        "player_health": 100,
+        "zombies_alive": 79,
+        "player_x": 150,
+        "player_y": 560,
+        "score": 980
+      },
+      {
+        "time": 64.655979,
+        "player_health": 100,
+        "zombies_alive": 80,
+        "player_x": 430,
+        "player_y": 625,
+        "score": 1000
+      },
+      {
+        "time": 65.665707,
+        "player_health": 100,
+        "zombies_alive": 82,
+        "player_x": 625,
+        "player_y": 375,
+        "score": 1000
+      }
+    ]
+  },
+  {
+    "player_id": 6,
+    "match_number": 2,
+    "condition": "with_dda",
+    "timestamp": "2025-12-21T15:04:05.171816",
+    "frames": [
+      {
+        "time": 0.579051,
+        "player_health": 100,
+        "zombies_alive": 0,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 1.57879,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 425,
+        "player_y": 325,
+        "score": 0
+      },
+      {
+        "time": 2.59408,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 425,
+        "player_y": 395.0,
+        "score": 0
+      },
+      {
+        "time": 3.595415,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 395.0,
+        "player_y": 490.0,
+        "score": 0
+      },
+      {
+        "time": 4.602256,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 340.0,
+        "player_y": 445.0,
+        "score": 10
+      },
+      {
+        "time": 5.613917,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 552.2999999999997,
+        "player_y": 428.1500000000003,
+        "score": 20
+      },
+      {
+        "time": 6.614213,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 418.60000000000036,
+        "player_y": 146.425000000001,
+        "score": 20
+      },
+      {
+        "time": 7.627728,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 175.07500000000104,
+        "player_y": 299.22500000000093,
+        "score": 30
+      },
+      {
+        "time": 8.627898,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 146.425000000001,
+        "player_y": 432.9250000000003,
+        "score": 40
+      },
+      {
+        "time": 9.628401,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 370.8500000000006,
+        "player_y": 246.70000000000113,
+        "score": 50
+      },
+      {
+        "time": 10.644053,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 666.088249999999,
+        "player_y": 427.33825000000013,
+        "score": 50
+      },
+      {
+        "time": 11.659654,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 479.1231250000002,
+        "player_y": 625,
+        "score": 50
+      },
+      {
+        "time": 12.672092,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 232.8763750000016,
+        "player_y": 506.43675000000076,
+        "score": 60
+      },
+      {
+        "time": 13.681614,
+        "player_health": 100,
+        "zombies_alive": 7,
+        "player_x": 301.2782500000013,
+        "player_y": 219.14887500000233,
+        "score": 70
+      },
+      {
+        "time": 14.6968,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 588.5661249999995,
+        "player_y": 264.7501250000023,
+        "score": 90
+      },
+      {
+        "time": 15.711968,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 590.8233868749991,
+        "player_y": 543.624569375002,
+        "score": 100
+      },
+      {
+        "time": 16.724708,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 316.46346624999853,
+        "player_y": 378.1376331250017,
+        "score": 110
+      },
+      {
+        "time": 17.739209,
+        "player_health": 80,
+        "zombies_alive": 6,
+        "player_x": 403.5618537499987,
+        "player_y": 103.77771250000123,
+        "score": 120
+      },
+      {
+        "time": 18.739422,
+        "player_health": 80,
+        "zombies_alive": 7,
+        "player_x": 590.8233868749991,
+        "player_y": 273.6195681250015,
+        "score": 120
+      },
+      {
+        "time": 19.752308,
+        "player_health": 80,
+        "zombies_alive": 9,
+        "player_x": 542.919273749999,
+        "player_y": 547.979488750002,
+        "score": 120
+      },
+      {
+        "time": 20.755431,
+        "player_health": 70,
+        "zombies_alive": 9,
+        "player_x": 262.3318184187498,
+        "player_y": 596.471515990627,
+        "score": 130
+      },
+      {
+        "time": 21.754846,
+        "player_health": 70,
+        "zombies_alive": 8,
+        "player_x": 162.21222198750013,
+        "player_y": 368.92697864687784,
+        "score": 150
+      },
+      {
+        "time": 22.769413,
+        "player_health": 95,
+        "zombies_alive": 8,
+        "player_x": 412.51121306562425,
+        "player_y": 323.418071178128,
+        "score": 160
+      },
+      {
+        "time": 23.779929,
+        "player_health": 95,
+        "zombies_alive": 8,
+        "player_x": 526.2834817374988,
+        "player_y": 541.8608270281272,
+        "score": 170
+      },
+      {
+        "time": 24.790726,
+        "player_health": 95,
+        "zombies_alive": 8,
+        "player_x": 307.8407258874996,
+        "player_y": 555.7126883788283,
+        "score": 180
+      },
+      {
+        "time": 25.790421,
+        "player_health": 100,
+        "zombies_alive": 9,
+        "player_x": 450.511150802031,
+        "player_y": 341.70705100703117,
+        "score": 180
+      },
+      {
+        "time": 26.794994,
+        "player_health": 100,
+        "zombies_alive": 9,
+        "player_x": 593.1815757165624,
+        "player_y": 560.4683692093126,
+        "score": 190
+      },
+      {
+        "time": 27.79691,
+        "player_health": 100,
+        "zombies_alive": 10,
+        "player_x": 735.8520006310938,
+        "player_y": 403.5309018033281,
+        "score": 200
+      },
+      {
+        "time": 28.807753,
+        "player_health": 100,
+        "zombies_alive": 10,
+        "player_x": 540.8690865812342,
+        "player_y": 180.01390277056225,
+        "score": 210
+      },
+      {
+        "time": 29.821175,
+        "player_health": 100,
+        "zombies_alive": 10,
+        "player_x": 237.6230984253981,
+        "player_y": 108.67869031329656,
+        "score": 220
+      },
+      {
+        "time": 30.822454,
+        "player_health": 60,
+        "zombies_alive": 10,
+        "player_x": 88.53250438971287,
+        "player_y": 411.8295648525225,
+        "score": 230
+      },
+      {
+        "time": 31.834994,
+        "player_health": 60,
+        "zombies_alive": 11,
+        "player_x": 317.1380819110966,
+        "player_y": 411.8295648525225,
+        "score": 230
+      },
+      {
+        "time": 32.834954,
+        "player_health": 85,
+        "zombies_alive": 11,
+        "player_x": 625.2586429181779,
+        "player_y": 436.67799719180323,
+        "score": 240
+      },
+      {
+        "time": 33.837057,
+        "player_health": 85,
+        "zombies_alive": 11,
+        "player_x": 501.01648122177414,
+        "player_y": 625,
+        "score": 250
+      },
+      {
+        "time": 34.851827,
+        "player_health": 85,
+        "zombies_alive": 11,
+        "player_x": 264.5339506488388,
+        "player_y": 370.0302357666393,
+        "score": 260
+      },
+      {
+        "time": 35.867634,
+        "player_health": 85,
+        "zombies_alive": 12,
+        "player_x": 482.6534897230467,
+        "player_y": 74.01086130878592,
+        "score": 260
+      },
+      {
+        "time": 36.868023,
+        "player_health": 85,
+        "zombies_alive": 11,
+        "player_x": 804.6394759754455,
+        "player_y": 245.39049915280623,
+        "score": 280
+      },
+      {
+        "time": 37.882751,
+        "player_health": 65,
+        "zombies_alive": 10,
+        "player_x": 778.2600987698131,
+        "player_y": 572.5698077641174,
+        "score": 300
+      },
+      {
+        "time": 38.882831,
+        "player_health": 65,
+        "zombies_alive": 10,
+        "player_x": 456.2741125174139,
+        "player_y": 614.6133552821807,
+        "score": 310
+      },
+      {
+        "time": 39.897749,
+        "player_health": 65,
+        "zombies_alive": 11,
+        "player_x": 448.45816236725454,
+        "player_y": 277.61866741253164,
+        "score": 310
+      },
+      {
+        "time": 40.906823,
+        "player_health": 65,
+        "zombies_alive": 9,
+        "player_x": 768.6524524058314,
+        "player_y": 299.32675487277413,
+        "score": 340
+      },
+      {
+        "time": 41.921279,
+        "player_health": 65,
+        "zombies_alive": 8,
+        "player_x": 486.4473154226789,
+        "player_y": 147.37014265107666,
+        "score": 360
+      },
+      {
+        "time": 42.924816,
+        "player_health": 65,
+        "zombies_alive": 9,
+        "player_x": 149.97195978892023,
+        "player_y": 147.37014265107666,
+        "score": 360
+      },
+      {
+        "time": 43.937797,
+        "player_health": 65,
+        "zombies_alive": 9,
+        "player_x": 166.2530253841021,
+        "player_y": 489.27252014989597,
+        "score": 370
+      },
+      {
+        "time": 44.952217,
+        "player_health": 65,
+        "zombies_alive": 7,
+        "player_x": 521.831497982875,
+        "player_y": 538.604148903297,
+        "score": 390
+      },
+      {
+        "time": 45.954142,
+        "player_health": 65,
+        "zombies_alive": 7,
+        "player_x": 731.6672983954426,
+        "player_y": 538.604148903297,
+        "score": 400
+      },
+      {
+        "time": 46.969142,
+        "player_health": 65,
+        "zombies_alive": 5,
+        "player_x": 618.2425414156763,
+        "player_y": 538.604148903297,
+        "score": 430
+      },
+      {
+        "time": 47.983746,
+        "player_health": 65,
+        "zombies_alive": 5,
+        "player_x": 294.9819840233403,
+        "player_y": 487.56300826240187,
+        "score": 440
+      },
+      {
+        "time": 48.995388,
+        "player_health": 90,
+        "zombies_alive": 5,
+        "player_x": 294.9819840233403,
+        "player_y": 266.3847321518555,
+        "score": 450
+      },
+      {
+        "time": 50.009205,
+        "player_health": 90,
+        "zombies_alive": 5,
+        "player_x": 294.9819840233403,
+        "player_y": 266.3847321518555,
+        "score": 460
+      },
+      {
+        "time": 51.009225,
+        "player_health": 90,
+        "zombies_alive": 5,
+        "player_x": 116.25292321247225,
+        "player_y": 342.2091821928301,
+        "score": 470
+      },
+      {
+        "time": 52.019062,
+        "player_health": 90,
+        "zombies_alive": 5,
+        "player_x": 116.25292321247225,
+        "player_y": 477.60998583742764,
+        "score": 480
+      },
+      {
+        "time": 53.029624,
+        "player_health": 50,
+        "zombies_alive": 5,
+        "player_x": 322.0621447522598,
+        "player_y": 271.8007642976394,
+        "score": 490
+      },
+      {
+        "time": 54.043907,
+        "player_health": 50,
+        "zombies_alive": 5,
+        "player_x": 517.0393020004802,
+        "player_y": 492.82903616707983,
+        "score": 500
+      },
+      {
+        "time": 55.045798,
+        "player_health": 50,
+        "zombies_alive": 4,
+        "player_x": 703.811170547837,
+        "player_y": 492.82903616707983,
+        "score": 520
+      },
+      {
+        "time": 56.045562,
+        "player_health": 50,
+        "zombies_alive": 5,
+        "player_x": 743.429445694246,
+        "player_y": 147.58406703408696,
+        "score": 520
+      },
+      {
+        "time": 57.058601,
+        "player_health": 50,
+        "zombies_alive": 4,
+        "player_x": 386.8649693765649,
+        "player_y": 119.2852990723662,
+        "score": 540
+      },
+      {
+        "time": 58.06933,
+        "player_health": 75,
+        "zombies_alive": 5,
+        "player_x": 171.79433286748736,
+        "player_y": 368.31445713550863,
+        "score": 540
+      },
+      {
+        "time": 59.081097,
+        "player_health": 75,
+        "zombies_alive": 2,
+        "player_x": 25,
+        "player_y": 544.7289766088758,
+        "score": 570
+      },
+      {
+        "time": 60.094698,
+        "player_health": 75,
+        "zombies_alive": 3,
+        "player_x": 362.1232227279796,
+        "player_y": 444.1834540408819,
+        "score": 570
+      },
+      {
+        "time": 61.107089,
+        "player_health": 75,
+        "zombies_alive": 3,
+        "player_x": 580.9575953759663,
+        "player_y": 601.3422299840013,
+        "score": 580
+      },
+      {
+        "time": 62.118666,
+        "player_health": 75,
+        "zombies_alive": 4,
+        "player_x": 764.3053129999564,
+        "player_y": 305.62010478401925,
+        "score": 580
+      },
+      {
+        "time": 63.132094,
+        "player_health": 55,
+        "zombies_alive": 5,
+        "player_x": 391.69543524797774,
+        "player_y": 335.19231730401737,
+        "score": 580
+      },
+      {
+        "time": 64.145829,
+        "player_health": 80,
+        "zombies_alive": 4,
+        "player_x": 197.6425766917494,
+        "player_y": 140.40015343478814,
+        "score": 600
+      },
+      {
+        "time": 65.159974,
+        "player_health": 80,
+        "zombies_alive": 5,
+        "player_x": 197.6425766917494,
+        "player_y": 437.06858943541107,
+        "score": 600
+      },
+      {
+        "time": 66.169215,
+        "player_health": 80,
+        "zombies_alive": 4,
+        "player_x": 197.6425766917494,
+        "player_y": 625,
+        "score": 610
+      },
+      {
+        "time": 67.171017,
+        "player_health": 80,
+        "zombies_alive": 3,
+        "player_x": 197.6425766917494,
+        "player_y": 433.40163508293205,
+        "score": 630
+      },
+      {
+        "time": 68.183653,
+        "player_health": 80,
+        "zombies_alive": 2,
+        "player_x": 197.6425766917494,
+        "player_y": 433.40163508293205,
+        "score": 650
+      },
+      {
+        "time": 69.193054,
+        "player_health": 80,
+        "zombies_alive": 2,
+        "player_x": 197.6425766917494,
+        "player_y": 433.40163508293205,
+        "score": 660
+      },
+      {
+        "time": 70.192988,
+        "player_health": 80,
+        "zombies_alive": 2,
+        "player_x": 197.6425766917494,
+        "player_y": 433.40163508293205,
+        "score": 670
+      },
+      {
+        "time": 71.206913,
+        "player_health": 80,
+        "zombies_alive": 2,
+        "player_x": 197.6425766917494,
+        "player_y": 433.40163508293205,
+        "score": 680
+      },
+      {
+        "time": 72.219442,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 326.8169582003539,
+        "player_y": 433.40163508293205,
+        "score": 690
+      },
+      {
+        "time": 73.233595,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 674.4252188400075,
+        "player_y": 404.6603351972672,
+        "score": 690
+      },
+      {
+        "time": 74.233129,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 674.4252188400075,
+        "player_y": 410.82841191430305,
+        "score": 700
+      },
+      {
+        "time": 75.245852,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 674.4252188400075,
+        "player_y": 410.82841191430305,
+        "score": 720
+      },
+      {
+        "time": 76.245729,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 674.4252188400075,
+        "player_y": 410.82841191430305,
+        "score": 720
+      },
+      {
+        "time": 77.258532,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 730
+      },
+      {
+        "time": 78.261417,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 740
+      },
+      {
+        "time": 79.261088,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 750
+      },
+      {
+        "time": 80.271217,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 750
+      },
+      {
+        "time": 81.272735,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 760
+      },
+      {
+        "time": 82.273775,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 770
+      },
+      {
+        "time": 83.275169,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 780
+      },
+      {
+        "time": 84.281393,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 800
+      },
+      {
+        "time": 85.291213,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 810
+      },
+      {
+        "time": 86.291367,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 810
+      },
+      {
+        "time": 87.291571,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 820
+      },
+      {
+        "time": 88.292351,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 830
+      },
+      {
+        "time": 89.307736,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 840
+      },
+      {
+        "time": 90.307847,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 840
+      },
+      {
+        "time": 91.30993,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 850
+      },
+      {
+        "time": 92.310988,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 860
+      },
+      {
+        "time": 93.326228,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 870
+      },
+      {
+        "time": 94.339024,
+        "player_health": 100,
+        "zombies_alive": 3,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 870
+      },
+      {
+        "time": 95.351585,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 890
+      },
+      {
+        "time": 96.353656,
+        "player_health": 100,
+        "zombies_alive": 1,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 910
+      },
+      {
+        "time": 97.367485,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 477.0467638948594,
+        "player_y": 410.82841191430305,
+        "score": 910
+      },
+      {
+        "time": 98.380715,
+        "player_health": 100,
+        "zombies_alive": 2,
+        "player_x": 241.8627154478836,
+        "player_y": 361.8317351545164,
+        "score": 920
+      },
+      {
+        "time": 99.39309,
+        "player_health": 60,
+        "zombies_alive": 4,
+        "player_x": 339.85606896745685,
+        "player_y": 459.82508867408967,
+        "score": 920
+      },
+      {
+        "time": 100.407117,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 535.8427760066033,
+        "player_y": 381.4304058584311,
+        "score": 930
+      },
+      {
+        "time": 101.408766,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 305.5583952356062,
+        "player_y": 214.84170487515655,
+        "score": 930
+      },
+      {
+        "time": 102.423811,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 134.07002657635303,
+        "player_y": 440.61839138425296,
+        "score": 940
+      },
+      {
+        "time": 103.436235,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 415.6784262532265,
+        "player_y": 532.7811403694116,
+        "score": 950
+      },
+      {
+        "time": 104.449081,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 241.59323372570506,
+        "player_y": 625,
+        "score": 960
+      },
+      {
+        "time": 105.460986,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 87.98865208377359,
+        "player_y": 338.27144760172825,
+        "score": 970
+      },
+      {
+        "time": 106.460802,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 405.43812081043114,
+        "player_y": 297.31022583054676,
+        "score": 980
+      },
+      {
+        "time": 107.474329,
+        "player_health": 100,
+        "zombies_alive": 6,
+        "player_x": 736.7632034120751,
+        "player_y": 356.1663813630136,
+        "score": 980
+      },
+      {
+        "time": 108.490492,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 742.1137630059357,
+        "player_y": 377.5686197384561,
+        "score": 1010
+      },
+      {
+        "time": 109.501672,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 742.1137630059357,
+        "player_y": 377.5686197384561,
+        "score": 1020
+      },
+      {
+        "time": 110.508247,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 522.7408196576524,
+        "player_y": 377.5686197384561,
+        "score": 1030
+      },
+      {
+        "time": 111.521202,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 185.65556524443366,
+        "player_y": 297.31022583054676,
+        "score": 1040
+      },
+      {
+        "time": 112.534112,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 291.0348364455187,
+        "player_y": 80.05075352183658,
+        "score": 1050
+      },
+      {
+        "time": 113.548222,
+        "player_health": 100,
+        "zombies_alive": 4,
+        "player_x": 572.0729791130469,
+        "player_y": 279.3323455951751,
+        "score": 1060
+      },
+      {
+        "time": 114.550431,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 561.8534102887733,
+        "player_y": 596.1389791476613,
+        "score": 1060
+      },
+      {
+        "time": 115.562322,
+        "player_health": 100,
+        "zombies_alive": 5,
+        "player_x": 520.9751349916786,
+        "player_y": 601.2487635597981,
+        "score": 1070
+      },
+      {
+        "time": 116.576297,
+        "player_health": 80,
+        "zombies_alive": 5,
+        "player_x": 372.1015661440705,
+        "player_y": 601.2487635597981,
+        "score": 1080
+      },
+      {
+        "time": 117.592094,
+        "player_health": 70,
+        "zombies_alive": 5,
+        "player_x": 105.11533060991891,
+        "player_y": 601.2487635597981,
+        "score": 1090
+      },
+      {
+        "time": 118.593395,
+        "player_health": 60,
+        "zombies_alive": 5,
+        "player_x": 249.2878977983611,
+        "player_y": 601.2487635597981,
+        "score": 1100
+      }
+    ]
+  }
+]

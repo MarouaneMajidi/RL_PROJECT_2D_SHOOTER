@@ -1,0 +1,20 @@
+{
+  "survival_time": 14.528274,
+  "final_score": 40,
+  "average_health": 98.0,
+  "health_variance": 7.483314773547883,
+  "min_health": 70,
+  "time_in_flow_zone_percent": 6.666666666666667,
+  "time_in_danger_percent": 0.0,
+  "time_in_safety_percent": 93.33333333333333,
+  "total_kills": 4,
+  "kill_rate_per_minute": 16.519512228362434,
+  "shooting_accuracy": 66.66666666666666,
+  "total_damage_dealt": 180,
+  "total_damage_taken": 10,
+  "average_zombies_alive": 4.4,
+  "peak_zombies_alive": 10,
+  "total_pickups_collected": 0,
+  "total_distance_moved": 1784.5499638287713,
+  "average_movement_speed": 122.8328956233047
+}
