@@ -243,9 +243,36 @@ class PPOAgent:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file not found: {path}")
         
-        # Load with weights_only=False for backwards compatibility with PyTorch 2.6+
-        # This is safe as long as you trust the checkpoint source
-        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        # Handle backward compatibility: map old module names to new ones
+        import sys
+        
+        # Map old module paths to new ones for backward compatibility
+        old_to_new_modules = {
+            'dda_agent': 'agents.dda_agent',
+            'ppo_agent': 'agents.ppo_agent',
+        }
+        
+        # Temporarily add old module paths to sys.modules for pickle loading
+        temp_modules = {}
+        for old_name, new_name in old_to_new_modules.items():
+            if old_name not in sys.modules:
+                try:
+                    # Import the new module and alias it as the old name
+                    new_module = __import__(new_name, fromlist=[''])
+                    sys.modules[old_name] = new_module
+                    temp_modules[old_name] = True
+                except ImportError:
+                    pass
+        
+        try:
+            # Load with weights_only=False for backwards compatibility with PyTorch 2.6+
+            # This is safe as long as you trust the checkpoint source
+            checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        finally:
+            # Clean up temporary module aliases
+            for old_name in temp_modules:
+                if old_name in sys.modules and sys.modules[old_name] is sys.modules.get(old_to_new_modules[old_name]):
+                    del sys.modules[old_name]
         
         self.policy.load_state_dict(checkpoint['policy_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

@@ -6,5 +6,29 @@
     "preference": "match2",
     "preferred_condition": "with_dda",
     "timestamp": "2025-12-21T15:04:17.479738"
+  },
+  {
+    "player_id": 1,
+    "match1_condition": "without_dda",
+    "match2_condition": "with_dda",
+    "preference": "match1",
+    "preferred_condition": "without_dda",
+    "timestamp": "2025-12-21T16:17:42.033127"
+  },
+  {
+    "player_id": 7,
+    "match1_condition": "without_dda",
+    "match2_condition": "with_dda",
+    "preference": "match1",
+    "preferred_condition": "without_dda",
+    "timestamp": "2025-12-21T17:49:47.923837"
+  },
+  {
+    "player_id": 8,
+    "match1_condition": "with_dda",
+    "match2_condition": "without_dda",
+    "preference": "match1",
+    "preferred_condition": "with_dda",
+    "timestamp": "2025-12-21T17:52:10.206271"
   }
 ]

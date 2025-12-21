@@ -329,6 +329,11 @@ def run_match_without_dda(player_id, match_number, collector):
                 if bullet in game.bullets:
                     game.bullets.remove(bullet)
             
+            # Remove dead zombies (killed by bullets)
+            for zombie in zombies_to_remove:
+                if zombie in game.zombies:
+                    game.zombies.remove(zombie)
+            
             # Update knife attacks
             knife_attacks_to_remove = []
             for knife in game.knife_attacks:
@@ -349,8 +354,12 @@ def run_match_without_dda(player_id, match_number, collector):
                                     game.pickups.append(Pickup(zombie.x, zombie.y, "health"))
                                 elif drop_chance < main_module.HEALTH_PICKUP_DROP_PROBABILITY + main_module.MACHINEGUN_PICKUP_DROP_PROBABILITY:
                                     game.pickups.append(Pickup(zombie.x, zombie.y, "machinegun"))
-                    for zombie in zombies_to_remove:
-                        game.zombies.remove(zombie)
+                            break
+            
+            # Remove dead zombies (killed by knife attacks)
+            for zombie in zombies_to_remove:
+                if zombie in game.zombies:
+                    game.zombies.remove(zombie)
             
             for knife in knife_attacks_to_remove:
                 if knife in game.knife_attacks:
@@ -692,8 +701,10 @@ def run_match(player_id, match_number, condition, dda_model_path=None):
     return consolidated_metrics, consolidated_frames
 
 
-def get_next_player_id(data_dir: str = "evaluation_data") -> int:
+def get_next_player_id(data_dir: str = None) -> int:
     """Get the next available player ID."""
+    if data_dir is None:
+        data_dir = os.path.join(project_root, "data/evaluation")
     os.makedirs(data_dir, exist_ok=True)
     counter_file = os.path.join(data_dir, "player_counter.json")
     if os.path.exists(counter_file):

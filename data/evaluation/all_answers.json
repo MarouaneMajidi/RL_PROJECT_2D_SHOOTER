@@ -30,5 +30,53 @@
     "enjoyment": 4,
     "difficulty": 2,
     "timestamp": "2025-12-21T15:04:12.186076"
+  },
+  {
+    "player_id": 1,
+    "match_number": 1,
+    "condition": "without_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T16:17:17.010855"
+  },
+  {
+    "player_id": 1,
+    "match_number": 2,
+    "condition": "with_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T16:17:40.151793"
+  },
+  {
+    "player_id": 7,
+    "match_number": 1,
+    "condition": "without_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T17:49:37.227024"
+  },
+  {
+    "player_id": 7,
+    "match_number": 2,
+    "condition": "with_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T17:49:46.417143"
+  },
+  {
+    "player_id": 8,
+    "match_number": 1,
+    "condition": "with_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T17:51:47.336654"
+  },
+  {
+    "player_id": 8,
+    "match_number": 2,
+    "condition": "without_dda",
+    "enjoyment": 3,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T17:52:09.029784"
   }
 ]

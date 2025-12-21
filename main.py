@@ -25,7 +25,7 @@ ASSET_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 # Import PPO agent (optional, only if agent_mode is used)
 try:
-    from ppo_agent import PPOAgent, PPOConfig
+    from agents.ppo_agent import PPOAgent, PPOConfig
     PPO_AVAILABLE = True
 except ImportError:
     PPO_AVAILABLE = False
