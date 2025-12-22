@@ -19,6 +19,7 @@ sys.path.insert(0, project_root)
 
 from agents.ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
 from agents.dda_agent import DDAAgent, DDAConfig, DDAEnvironment, DifficultyManager
+from utils.dda_training_metrics import DDATrainingMetricsTracker
 
 
 def get_base_params():
@@ -43,7 +44,8 @@ def train_dda(
     player_model_path: str = os.path.join(project_root, "checkpoints/best_model.pth"),
     dda_config: Optional[DDAConfig] = None,
     checkpoint_path: Optional[str] = None,
-    render: bool = False
+    render: bool = False,
+    max_episodes: Optional[int] = None
 ):
     """
     Train DDA agent.
@@ -53,6 +55,7 @@ def train_dda(
         dda_config: DDAConfig object (uses default if None)
         checkpoint_path: Path to DDA checkpoint to resume from (optional)
         render: Whether to render during training
+        max_episodes: Maximum number of episodes to train (if None, uses timesteps from config)
     """
     print("=" * 60)
     print("DDA Agent Training")
@@ -107,17 +110,30 @@ def train_dda(
     # Create checkpoint directory
     os.makedirs(dda_config.checkpoint_dir, exist_ok=True)
     
+    # Create metrics tracker
+    metrics_tracker = DDATrainingMetricsTracker(save_dir=os.path.join(dda_config.checkpoint_dir, "metrics"))
+    
     # Training loop
     print("\nStarting training...")
-    print(f"Total timesteps: {dda_config.total_timesteps}")
+    if max_episodes is not None:
+        print(f"Max episodes: {max_episodes}")
+    else:
+        print(f"Total timesteps: {dda_config.total_timesteps}")
     print(f"Action interval: {dda_config.action_interval} frames ({dda_config.action_interval/60:.1f} seconds)")
+    print(f"Metrics will be saved to: {metrics_tracker.metrics_file}")
     print("-" * 60)
     
     episode_count = 0
     best_reward = float('-inf')
     start_time = time.time()
     
-    while dda_agent.total_timesteps < dda_config.total_timesteps:
+    # Initialize episode tracking
+    metrics_tracker.start_episode()
+    last_update_metrics = None
+    
+    # Training loop condition: use episodes if specified, otherwise use timesteps
+    should_continue = True
+    while should_continue:
         # Reset environment
         state = dda_env.reset()
         episode_reward = 0.0
@@ -138,11 +154,24 @@ def train_dda(
             episode_reward += reward
             episode_length += 1
             
+            # Update metrics tracker with step
+            metrics_tracker.update_episode_step(reward, info, dda_action=action)
+            
             state = next_state
             
             # Handle episode end
             if done:
                 episode_count += 1
+                
+                # Get current learning rate from optimizer
+                current_lr = dda_agent.optimizer.param_groups[0]['lr']
+                
+                # End episode in metrics tracker (saves metrics to JSON)
+                metrics_tracker.end_episode(
+                    timestep=dda_agent.total_timesteps,
+                    update_metrics=last_update_metrics,
+                    learning_rate=current_lr
+                )
                 
                 # Log episode
                 if episode_count % dda_config.log_interval == 0:
@@ -163,6 +192,14 @@ def train_dda(
                     dda_agent.save(dda_config.best_model_path)
                     print(f"New best reward: {best_reward:.2f} - Model saved!")
                 
+                # Start new episode in metrics tracker
+                metrics_tracker.start_episode()
+                
+                # Check if we've reached max episodes
+                if max_episodes is not None and episode_count >= max_episodes:
+                    should_continue = False
+                    break
+                
                 # Reset for next episode
                 break
         
@@ -174,6 +211,13 @@ def train_dda(
             # Update agent
             update_stats = dda_agent.update(last_value)
             
+            # Get current learning rate from optimizer
+            current_lr = dda_agent.optimizer.param_groups[0]['lr']
+            
+            # Record update metrics in tracker
+            metrics_tracker.record_update(update_stats, current_lr)
+            last_update_metrics = update_stats
+            
             # Log training stats
             if dda_agent.num_updates % dda_config.log_interval == 0:
                 print(f"Update {dda_agent.num_updates} | "
@@ -181,6 +225,8 @@ def train_dda(
                       f"Value Loss: {update_stats['value_loss']:.4f} | "
                       f"Entropy: {update_stats['entropy_loss']:.4f} | "
                       f"Clip Fraction: {update_stats['clip_fraction']:.4f}")
+                if 'explained_variance' in update_stats:
+                    print(f"  Explained Variance: {update_stats['explained_variance']:.4f}")
         
         # Save checkpoint periodically
         if dda_agent.total_timesteps % dda_config.save_interval == 0:
@@ -190,12 +236,20 @@ def train_dda(
             )
             dda_agent.save(checkpoint_path)
             print(f"Checkpoint saved at {dda_agent.total_timesteps} timesteps")
+        
+        # Check if we should continue (for timestep-based training)
+        if max_episodes is None and dda_agent.total_timesteps >= dda_config.total_timesteps:
+            should_continue = False
+    
+    # Finalize metrics tracking (saves final summary)
+    metrics_tracker.finalize(total_timesteps=dda_agent.total_timesteps)
     
     print("\n" + "=" * 60)
     print("Training completed!")
     print(f"Total episodes: {episode_count}")
     print(f"Best reward: {best_reward:.2f}")
     print(f"Final model saved to: {dda_config.best_model_path}")
+    print(f"Metrics saved to: {metrics_tracker.metrics_file}")
     print("=" * 60)
 
 
@@ -203,18 +257,31 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Train DDA Agent")
-    parser.add_argument('--player-model', type=str, default=os.path.join(project_root, 'checkpoints/best_model.pth'),
+    parser.add_argument('--player-model', type=str, default=os.path.join(project_root, 'checkpoints/player_ppo/best_model.pth'),
                        help='Path to trained player agent model')
     parser.add_argument('--checkpoint', type=str, default=None,
                        help='Path to DDA checkpoint to resume from')
     parser.add_argument('--render', action='store_true',
                        help='Render during training')
+    parser.add_argument('--episodes', type=int, default=None,
+                       help='Maximum number of episodes to train (if specified, overrides timesteps)')
+    parser.add_argument('--timesteps', type=int, default=None,
+                       help='Maximum number of timesteps to train (if episodes not specified)')
     
     args = parser.parse_args()
     
+    # Create config and override timesteps if specified
+    dda_config = None
+    if args.timesteps is not None:
+        from agents.dda_agent import DDAConfig
+        dda_config = DDAConfig()
+        dda_config.total_timesteps = args.timesteps
+    
     train_dda(
         player_model_path=args.player_model,
+        dda_config=dda_config,
         checkpoint_path=args.checkpoint,
-        render=args.render
+        render=args.render,
+        max_episodes=args.episodes
     )
 
