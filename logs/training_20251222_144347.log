@@ -1,0 +1,3 @@
+timestep,episode,episode_reward,episode_length,zombies_killed,wave,has_machinegun,mg_ammo,weapon,policy_loss,value_loss,entropy_loss,total_loss,clip_fraction,approx_kl,fps,elapsed_time
+2930,1,1605.8939999999977,2930,59,6,False,0,pistol,,,,,,,977.7974009498931,2.9965314865112305
+4909,2,1717.1039999999994,1979,34,4,False,0,pistol,,,,,,,876.6779120042424,5.257311582565308

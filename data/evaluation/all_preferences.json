@@ -30,5 +30,13 @@
     "preference": "match1",
     "preferred_condition": "with_dda",
     "timestamp": "2025-12-21T17:52:10.206271"
+  },
+  {
+    "player_id": 9,
+    "match1_condition": "with_dda",
+    "match2_condition": "without_dda",
+    "preference": "match1",
+    "preferred_condition": "with_dda",
+    "timestamp": "2025-12-21T19:01:39.069345"
   }
 ]

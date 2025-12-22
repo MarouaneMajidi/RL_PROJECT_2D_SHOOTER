@@ -426,6 +426,7 @@ class ZombieShooterEnv:
         info['has_machinegun'] = self.player['has_machinegun']
         info['machinegun_ammo'] = self.player['machinegun_ammo']
         info['current_weapon'] = self.player['weapon']
+        info['score'] = self.player['score']  # Game score (increases with zombie kills)
         
         return state, reward, done, info
     

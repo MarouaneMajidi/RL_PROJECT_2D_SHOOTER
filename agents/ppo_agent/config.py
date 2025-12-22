@@ -91,8 +91,8 @@ class PPOConfig:
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     
     # Checkpoint settings
-    checkpoint_dir: str = "checkpoints"
-    best_model_path: str = "checkpoints/best_model.pth"
+    checkpoint_dir: str = "checkpoints/player_ppo"
+    best_model_path: str = "checkpoints/player_ppo/best_model.pth"
     
     # Environment-specific settings
     fps: int = 60

@@ -78,5 +78,21 @@
     "enjoyment": 3,
     "difficulty": 3,
     "timestamp": "2025-12-21T17:52:09.029784"
+  },
+  {
+    "player_id": 9,
+    "match_number": 1,
+    "condition": "with_dda",
+    "enjoyment": 4,
+    "difficulty": 3,
+    "timestamp": "2025-12-21T19:00:38.771425"
+  },
+  {
+    "player_id": 9,
+    "match_number": 2,
+    "condition": "without_dda",
+    "enjoyment": 2,
+    "difficulty": 4,
+    "timestamp": "2025-12-21T19:01:36.783694"
   }
 ]

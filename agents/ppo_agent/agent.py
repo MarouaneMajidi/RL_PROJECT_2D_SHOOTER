@@ -142,6 +142,10 @@ class PPOAgent:
         clip_fractions = []
         approx_kl_divs = []
         
+        # For explained variance calculation
+        all_returns = []
+        all_values = []
+        
         # Perform multiple epochs of updates
         for epoch in range(self.config.n_epochs):
             # Generate mini-batches
@@ -151,6 +155,11 @@ class PPOAgent:
                 # Evaluate actions with current policy
                 log_probs, values, entropy = self.policy.evaluate_actions(states, actions)
                 values = values.squeeze(-1)
+                
+                # Store returns and values for explained variance (only in first epoch to avoid duplicates)
+                if epoch == 0:
+                    all_returns.append(returns.detach().cpu().numpy())
+                    all_values.append(values.detach().cpu().numpy())
                 
                 # Compute policy loss with clipped surrogate objective
                 ratio = torch.exp(log_probs - old_log_probs)
@@ -199,6 +208,17 @@ class PPOAgent:
                     approx_kl = ((ratio - 1.0) - torch.log(ratio)).mean().item()
                     approx_kl_divs.append(approx_kl)
         
+        # Calculate explained variance: 1 - Var(returns - values) / Var(returns)
+        explained_variance = 0.0
+        if all_returns and all_values:
+            returns_array = np.concatenate(all_returns)
+            values_array = np.concatenate(all_values)
+            returns_var = np.var(returns_array)
+            if returns_var > 1e-8:
+                explained_variance = 1.0 - np.var(returns_array - values_array) / returns_var
+            else:
+                explained_variance = 0.0
+        
         # Reset buffer
         self.rollout_buffer.reset()
         self.num_updates += 1
@@ -211,6 +231,7 @@ class PPOAgent:
             'total_loss': np.mean(total_losses),
             'clip_fraction': np.mean(clip_fractions),
             'approx_kl': np.mean(approx_kl_divs),
+            'explained_variance': explained_variance,
             'num_updates': self.num_updates
         }
     

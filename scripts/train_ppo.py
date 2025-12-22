@@ -17,6 +17,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 from agents.ppo_agent import PPOAgent, ZombieShooterEnv, PPOConfig
+from utils.training_metrics import TrainingMetricsTracker
 
 
 class Logger:
@@ -101,6 +102,9 @@ def train_ppo(
     # Create logger
     logger = Logger()
     
+    # Create metrics tracker
+    metrics_tracker = TrainingMetricsTracker(save_dir=os.path.join(config.checkpoint_dir, "metrics"))
+    
     # Create checkpoint directory
     os.makedirs(config.checkpoint_dir, exist_ok=True)
     
@@ -110,6 +114,7 @@ def train_ppo(
     print(f"Rollout steps: {config.n_steps}")
     print(f"Batch size: {config.batch_size}")
     print(f"Epochs per update: {config.n_epochs}")
+    print(f"Metrics will be saved to: {metrics_tracker.metrics_file}")
     
     state = env.reset()
     episode_reward = 0
@@ -120,6 +125,10 @@ def train_ppo(
     start_time = time.time()
     last_log_time = start_time
     timesteps_since_log = 0
+    
+    # Initialize episode tracking
+    metrics_tracker.start_episode()
+    last_update_metrics = None
     
     while agent.total_timesteps < config.total_timesteps:
         # Collect rollout
@@ -137,6 +146,9 @@ def train_ppo(
             episode_length += 1
             timesteps_since_log += 1
             
+            # Update metrics tracker with step
+            metrics_tracker.update_episode_step(reward, info)
+            
             # Render if enabled
             if render:
                 env.render()
@@ -146,6 +158,16 @@ def train_ppo(
             # Handle episode end
             if done:
                 episode_count += 1
+                
+                # Get current learning rate from optimizer
+                current_lr = agent.optimizer.param_groups[0]['lr']
+                
+                # End episode in metrics tracker (saves metrics to JSON)
+                metrics_tracker.end_episode(
+                    timestep=agent.total_timesteps,
+                    update_metrics=last_update_metrics,
+                    learning_rate=current_lr
+                )
                 
                 # Prepare log data - ENHANCED with weapon tracking
                 log_data = {
@@ -178,12 +200,22 @@ def train_ppo(
                 last_log_time = time.time()
                 timesteps_since_log = 0
                 
+                # Start new episode in metrics tracker
+                metrics_tracker.start_episode()
+                
                 # Reset environment
                 state = env.reset()
         
         # Perform PPO update
         last_value = agent.get_value(state)
         update_stats = agent.update(last_value)
+        
+        # Get current learning rate from optimizer
+        current_lr = agent.optimizer.param_groups[0]['lr']
+        
+        # Record update metrics in tracker
+        metrics_tracker.record_update(update_stats, current_lr)
+        last_update_metrics = update_stats
         
         # Log update statistics
         current_time = time.time()
@@ -204,6 +236,8 @@ def train_ppo(
         print(f"Value Loss: {update_stats['value_loss']:.4f}")
         print(f"Entropy: {update_stats['entropy_loss']:.4f}")
         print(f"Clip Fraction: {update_stats['clip_fraction']:.4f}")
+        if 'explained_variance' in update_stats:
+            print(f"Explained Variance: {update_stats['explained_variance']:.4f}")
         
         # Save checkpoint periodically
         if agent.total_timesteps % config.save_interval < config.n_steps:
@@ -217,6 +251,9 @@ def train_ppo(
     final_path = os.path.join(config.checkpoint_dir, "final_model.pth")
     agent.save(final_path)
     
+    # Finalize metrics tracking (saves final summary)
+    metrics_tracker.finalize(total_timesteps=agent.total_timesteps)
+    
     # Close environment
     env.close()
     
@@ -226,6 +263,7 @@ def train_ppo(
     print(f"Best reward: {best_reward:.2f}")
     print(f"Final model saved to: {final_path}")
     print(f"Best model saved to: {config.best_model_path}")
+    print(f"Metrics saved to: {metrics_tracker.metrics_file}")
     print("="*70)
 
 
