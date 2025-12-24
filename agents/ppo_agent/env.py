@@ -128,18 +128,73 @@ class ZombieShooterEnv:
             pygame.display.set_caption("PPO Training - Zombie Shooter")
             self.clock = pygame.time.Clock()
         else:
-            # Minimal pygame init for headless mode
-            os.environ['SDL_VIDEODRIVER'] = 'dummy'
+            # In headless mode, still need full-size screen for CNN image capture
+            # The CNN wrapper sets headless=False internally, but we handle both cases
+            # Check if SDL_VIDEODRIVER is set (CNN wrapper may have set it)
+            if 'SDL_VIDEODRIVER' not in os.environ:
+                os.environ['SDL_VIDEODRIVER'] = 'dummy'
             pygame.init()
-            self.screen = pygame.display.set_mode((1, 1))
+            # Use full screen size even in headless (needed for CNN to capture images)
+            self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+            self.clock = pygame.time.Clock()
+        
+        # Load sprite assets (like main.py does)
+        # Load sprites regardless of headless mode (needed for CNN training)
+        self._load_sprites()
         
         # Game state
         self.player = None
         self.zombies = []
         self.bullets = []
-        self.pickups = []
+    
+    def _load_sprites(self):
+        """Load sprite images from assets folder (like main.py does)."""
+        # Get assets directory (project root/assets)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        asset_dir = os.path.join(project_root, "assets")
         
-        # Episode tracking
+        def load_sprite(filename, scale=1.0):
+            """Load a sprite from disk and scale it."""
+            path = os.path.join(asset_dir, filename)
+            if not os.path.exists(path):
+                # Return None if sprite doesn't exist (fallback to circles)
+                return None
+            try:
+                image = pygame.image.load(path).convert_alpha()
+                if scale != 1.0:
+                    new_size = (int(image.get_width() * scale), int(image.get_height() * scale))
+                    image = pygame.transform.scale(image, new_size)
+                return image
+            except Exception as e:
+                print(f"Warning: Could not load sprite {filename}: {e}")
+                return None
+        
+        # Load sprites (with fallback to None if files don't exist)
+        self.player_pistol_img = load_sprite("player pistol.gif", 1.2)
+        self.player_machinegun_img = load_sprite("player machinegun.gif", 1.2)
+        self.player_knife_img = load_sprite("player knife.gif", 1.2)
+        self.zombie_img = load_sprite("zombie.gif", 1.2)
+        self.zombie2_img = load_sprite("zombie 2.gif", 1.2)
+        
+        # Load background
+        bg_path = os.path.join(asset_dir, "background.png")
+        if os.path.exists(bg_path):
+            try:
+                self.background_img = pygame.image.load(bg_path).convert()
+                self.background_img = pygame.transform.scale(self.background_img, (self.ARENA_WIDTH, self.ARENA_HEIGHT))
+            except Exception as e:
+                print(f"Warning: Could not load background: {e}")
+                self.background_img = None
+        else:
+            self.background_img = None
+        
+        # Check if sprites loaded successfully
+        self.use_sprites = (self.player_pistol_img is not None and 
+                           self.zombie_img is not None)
+        if self.use_sprites:
+            print("Loaded sprite assets successfully - using real game graphics!")
+        else:
+            print("Warning: Could not load sprite assets - falling back to simple circles")
         self.episode_steps = 0
         self.max_episode_steps = 10000
         self.spawn_timer = 0
@@ -155,6 +210,7 @@ class ZombieShooterEnv:
         self.last_health = 100
         self.previous_min_zombie_dist = float('inf')
         self.previous_danger = 0.0  # Track danger for danger-based rewards
+        self.previous_zombie_density = 0.0  # Track zombie density for density-based rewards
         self.last_weapon = 'pistol'  # Track weapon switches
         self.last_movement_direction = [0, 0, 0, 0]  # Track last movement direction [up, down, left, right]
         
@@ -203,6 +259,7 @@ class ZombieShooterEnv:
         self.last_health = self.player['health']
         self.previous_min_zombie_dist = float('inf')
         self.previous_danger = 0.0
+        self.previous_zombie_density = 0.0
         self.last_weapon = 'pistol'
         self.last_movement_direction = [0, 0, 0, 0]
         self.previous_pickup_distances = {}
@@ -340,32 +397,83 @@ class ZombieShooterEnv:
             reward += self.config.reward_damage_taken * (damage_taken / 10)
         self.last_health = self.player['health']
         
-        # 3. IDLE PENALTY
+        # 3. IDLE PENALTY (ALWAYS PENALIZE IDLING, STRONGER WHEN ZOMBIES NEARBY)
         current_pos = (self.player['x'], self.player['y'])
+        in_bounds_zombies = self._get_in_bounds_zombies()
+        
         if current_pos == self.last_player_pos:
             self.idle_frames += 1
-            reward += self.config.reward_idle_penalty
+            idle_seconds = self.idle_frames / 60.0
+            
+            # ALWAYS penalize idling (base penalty - REDUCED to prevent collapse)
+            base_idle_penalty = self.config.reward_idle_penalty
+            
+            # If zombies are nearby, apply stronger penalty (but capped to prevent explosion)
+            if len(in_bounds_zombies) > 0:
+                # Find nearest zombie distance
+                min_dist = min([self._distance(self.player['x'], self.player['y'], z['x'], z['y']) 
+                               for z in in_bounds_zombies])
+                
+                if min_dist < 300:  # Zombies within 300 pixels - DANGER ZONE
+                    # Stronger penalty when zombies are closer (multiplier scales from 1.0 to 2.0, REDUCED)
+                    distance_factor = 1.0 - (min_dist / 300.0)  # 1.0 when very close, 0.0 at 300px
+                    zombie_multiplier = 1.0 + distance_factor  # Range: 1.0 to 2.0 (was 3.0)
+                    
+                    # Progressive penalty: worse the longer you stay still (CAPPED at 3x)
+                    progressive_multiplier = min(1.0 + (idle_seconds * 0.5), 3.0)  # Cap at 3x
+                    total_penalty = base_idle_penalty * zombie_multiplier * progressive_multiplier
+                    reward += total_penalty
+                elif min_dist < 500:  # Zombies between 300-500 pixels - moderate danger
+                    # Moderate penalty
+                    progressive_multiplier = min(1.0 + (idle_seconds * 0.2), 2.0)  # Cap at 2x
+                    reward += base_idle_penalty * progressive_multiplier
+                else:
+                    # Zombies far away - small penalty
+                    progressive_multiplier = min(1.0 + (idle_seconds * 0.1), 1.5)  # Cap at 1.5x
+                    reward += base_idle_penalty * progressive_multiplier
+            else:
+                # No zombies visible - minimal penalty (encourage exploration but don't force it)
+                progressive_multiplier = min(1.0 + (idle_seconds * 0.05), 1.2)  # Very small, capped
+                reward += base_idle_penalty * progressive_multiplier
         else:
             self.idle_frames = 0
         self.last_player_pos = current_pos
         
-        # 4. POSITIONING REWARDS/PENALTIES (only consider in-bounds zombies)
+        # 4. MOVEMENT REWARDS (ALWAYS REWARD MOVEMENT, STRONGER WHEN ZOMBIES NEARBY)
         in_bounds_zombies = self._get_in_bounds_zombies()
-        if len(in_bounds_zombies) > 0:
-            # Find nearest in-bounds zombie
-            min_dist = min([self._distance(self.player['x'], self.player['y'], z['x'], z['y']) 
-                           for z in in_bounds_zombies])
+        zombie_count = len(in_bounds_zombies)
+        
+        # ALWAYS reward movement (even when no zombies visible)
+        if current_pos != self.last_player_pos:
+            # Base movement reward (small, balanced)
+            reward += 0.02  # Reduced from 0.05 to balance with reduced idle penalty
             
-            # Penalty for standing still while zombies nearby
-            if current_pos == self.last_player_pos and min_dist < 200:
-                reward += self.config.reward_standing_still_penalty
-            
-            # Penalty for too close to zombies
-            if min_dist < self.config.danger_threshold:
-                reward += self.config.reward_too_close_penalty
-            
-            # Update previous distance
-            self.previous_min_zombie_dist = min_dist
+            if zombie_count > 0:
+                # Find nearest in-bounds zombie
+                min_dist = min([self._distance(self.player['x'], self.player['y'], z['x'], z['y']) 
+                               for z in in_bounds_zombies])
+                
+                # Stronger movement reward when zombies nearby (encourages running away)
+                if min_dist < 300:  # Zombies within 300 pixels - DANGER ZONE
+                    # Bonus scales with distance (stronger when zombies closer)
+                    distance_factor = 1.0 - (min_dist / 300.0)  # 1.0 when very close, 0.0 at 300px
+                    movement_bonus = distance_factor * 0.15  # Up to 0.15 bonus (reduced from 0.4)
+                    reward += movement_bonus
+                    
+                    # Additional bonus when many zombies nearby (more urgent to move)
+                    if zombie_count >= 3:
+                        zombie_multiplier = min(zombie_count / 5.0, 1.5)  # Up to 1.5x (reduced from 2.0x)
+                        reward += movement_bonus * zombie_multiplier
+                elif min_dist < 500:  # Moderate danger zone
+                    distance_factor = 1.0 - ((min_dist - 300) / 200.0)  # Scales from 1.0 to 0.0
+                    reward += distance_factor * 0.05  # Smaller bonus
+                
+                # Penalty for too close to zombies
+                if min_dist < self.config.danger_threshold:
+                    reward += self.config.reward_too_close_penalty
+                
+                # Update previous distance
+                self.previous_min_zombie_dist = min_dist
         
         # 5. DANGER & DISTANCE-BASED BEHAVIOR
         current_danger = self._compute_danger_score()
@@ -376,10 +484,35 @@ class ZombieShooterEnv:
         elif current_danger > self.previous_danger:
             reward += self.config.reward_danger_increase
         
-        # Penalty for entering high-density zone
+        # NEW: Density-based rewards/penalties (encourage moving to less dense areas)
         zombie_density = self._compute_zombie_density()
+        previous_density = getattr(self, 'previous_zombie_density', 0.0)
+        
+        # Track density change
+        density_change = zombie_density - previous_density
+        self.previous_zombie_density = zombie_density
+        
+        # Penalty for staying still in high-density zone (strongly encourage escaping)
         if zombie_density >= self.config.high_density_threshold:
-            reward += self.config.reward_high_density_penalty
+            if current_pos == self.last_player_pos:
+                # Strong penalty for camping in dense zombie clusters (capped to prevent explosion)
+                density_multiplier = min(zombie_density / self.config.high_density_threshold, 2.0)  # Cap at 2x
+                density_penalty = self.config.reward_high_density_penalty * density_multiplier
+                reward += density_penalty * 1.5  # 1.5x penalty when stationary (reduced from 2.0x)
+            else:
+                # Smaller penalty for being in dense area (but at least moving)
+                reward += self.config.reward_high_density_penalty
+        
+        # Reward for moving to less dense areas (escaping dense clusters)
+        if current_pos != self.last_player_pos and density_change < 0 and zombie_density >= 2.0:
+            # Moving to lower density (escaping) - reward based on how much density decreased
+            escape_bonus = abs(density_change) * 0.2  # Reward proportional to density reduction
+            reward += escape_bonus
+        
+        # Reward for being in low-density areas (safe zones) - encourage seeking them
+        if zombie_density < 2.0:  # Very few zombies nearby (safe zone)
+            if current_pos != self.last_player_pos:
+                reward += 0.1  # Small bonus for moving into/through safe zones
         
         # Reward for moving away from nearby zombies (only in-bounds)
         if len(in_bounds_zombies) > 0 and current_pos != self.last_player_pos:
@@ -1216,20 +1349,24 @@ class ZombieShooterEnv:
         if self.headless:
             return
         
-        # Simple rendering - fill expanded screen
+        # Fill expanded screen background
         self.screen.fill((96, 96, 96))
         
-        # Draw arena background (darker to distinguish playable area)
+        # Draw arena background
         arena_rect = pygame.Rect(
             self.ARENA_X_OFFSET,
             self.ARENA_Y_OFFSET,
             self.ARENA_WIDTH,
             self.ARENA_HEIGHT
         )
-        pygame.draw.rect(self.screen, (80, 80, 80), arena_rect)
         
-        # Draw glass borders around the arena (only on left and right sides as requested)
-        # Create a surface for transparency
+        # Use background sprite if available, otherwise draw gray rectangle
+        if self.background_img:
+            self.screen.blit(self.background_img, (self.ARENA_X_OFFSET, self.ARENA_Y_OFFSET))
+        else:
+            pygame.draw.rect(self.screen, (80, 80, 80), arena_rect)
+        
+        # Draw glass borders around the arena (only on left and right sides)
         glass_surface = pygame.Surface((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SRCALPHA)
         
         # Left glass border (full height of arena)
@@ -1253,33 +1390,97 @@ class ZombieShooterEnv:
         # Blit the glass surface onto the screen
         self.screen.blit(glass_surface, (0, 0))
         
-        # Draw player
-        color = (0, 255, 0) if self.player['weapon'] == 'pistol' else (0, 200, 255)
-        pygame.draw.circle(self.screen, color, 
-                          (int(self.player['x']), int(self.player['y'])), 15)
-        
-        # Draw zombies
-        for zombie in self.zombies:
-            color = (255, 0, 0) if zombie['type'] == 'normal' else (150, 0, 0)
+        # Draw player using sprite or circle
+        if self.use_sprites and self.player_pistol_img:
+            # Get appropriate player sprite based on weapon
+            if self.player['weapon'] == 'pistol':
+                player_img = self.player_pistol_img
+            elif self.player['weapon'] == 'machinegun' and self.player.get('has_machinegun', False):
+                player_img = self.player_machinegun_img if self.player_machinegun_img else self.player_pistol_img
+            else:
+                player_img = self.player_knife_img if self.player_knife_img else self.player_pistol_img
+            
+            # Rotate sprite to face the angle
+            rotated_img = pygame.transform.rotate(player_img, self.player['angle'])
+            rect = rotated_img.get_rect(center=(int(self.player['x']), int(self.player['y'])))
+            self.screen.blit(rotated_img, rect)
+            
+            # Draw health bar above player
+            health_width = 50
+            pygame.draw.rect(self.screen, (255, 0, 0), 
+                           (int(self.player['x']) - health_width // 2, int(self.player['y']) - 40, health_width, 5))
+            pygame.draw.rect(self.screen, (0, 255, 0), 
+                           (int(self.player['x']) - health_width // 2, int(self.player['y']) - 40, 
+                            health_width * (self.player['health'] / 100), 5))
+        else:
+            # Fallback to simple circle
+            color = (0, 255, 0) if self.player['weapon'] == 'pistol' else (0, 200, 255)
             pygame.draw.circle(self.screen, color, 
-                             (int(zombie['x']), int(zombie['y'])), 12)
+                              (int(self.player['x']), int(self.player['y'])), 15)
         
-        # Draw bullets
+        # Draw zombies using sprites or circles
+        for zombie in self.zombies:
+            if self.use_sprites and self.zombie_img:
+                # Get appropriate zombie sprite
+                zombie_img = self.zombie_img if zombie['type'] == 'normal' else (self.zombie2_img if self.zombie2_img else self.zombie_img)
+                
+                # Rotate sprite to face player direction (use stored angle)
+                angle = zombie.get('angle', 0)  # Use stored angle, default to 0 if not set
+                rotated_img = pygame.transform.rotate(zombie_img, angle)
+                rect = rotated_img.get_rect(center=(int(zombie['x']), int(zombie['y'])))
+                self.screen.blit(rotated_img, rect)
+                
+                # Draw health bar above zombie
+                health_width = 30
+                max_health = self.ZOMBIE_NORMAL_HEALTH if zombie['type'] == 'normal' else self.ZOMBIE_STRONG_HEALTH
+                pygame.draw.rect(self.screen, (255, 0, 0), 
+                               (int(zombie['x']) - health_width // 2, int(zombie['y']) - 30, health_width, 5))
+                pygame.draw.rect(self.screen, (0, 255, 0), 
+                               (int(zombie['x']) - health_width // 2, int(zombie['y']) - 30, 
+                                health_width * (zombie['health'] / max_health), 5))
+            else:
+                # Fallback to simple circle
+                color = (255, 0, 0) if zombie['type'] == 'normal' else (150, 0, 0)
+                pygame.draw.circle(self.screen, color, 
+                                 (int(zombie['x']), int(zombie['y'])), 12)
+        
+        # Draw bullets (keep as circles for visibility - they're small)
         for bullet in self.bullets:
             color = (255, 255, 0) if bullet.get('weapon') == 'pistol' else (255, 165, 0)
             pygame.draw.circle(self.screen, color, 
                              (int(bullet['x']), int(bullet['y'])), 4)
         
-        # Draw pickups
+        # Draw pickups (keep similar drawing style to main.py)
         for pickup in self.pickups:
             if pickup['type'] == 'health':
+                # Health pickup: red cross
                 pygame.draw.rect(self.screen, (255, 0, 0), 
+                               (int(pickup['x']) - 15, int(pickup['y']) - 3, 30, 6))
+                pygame.draw.rect(self.screen, (255, 0, 0), 
+                               (int(pickup['x']) - 3, int(pickup['y']) - 15, 6, 30))
+                pygame.draw.circle(self.screen, (255, 255, 255), 
+                                 (int(pickup['x']), int(pickup['y'])), 18, 2)
+            elif pickup['type'] == 'machinegun':
+                # Machinegun pickup: gray box with yellow indicator
+                pygame.draw.rect(self.screen, (100, 100, 100), 
+                               (int(pickup['x']) - 12, int(pickup['y']) - 4, 24, 8))
+                pygame.draw.rect(self.screen, (150, 150, 150), 
                                (int(pickup['x']) - 8, int(pickup['y']) - 2, 16, 4))
-                pygame.draw.rect(self.screen, (255, 0, 0), 
-                               (int(pickup['x']) - 2, int(pickup['y']) - 8, 4, 16))
-            else:
-                pygame.draw.rect(self.screen, (100, 100, 100),
-                               (int(pickup['x']) - 10, int(pickup['y']) - 4, 20, 8))
+                pygame.draw.circle(self.screen, (255, 255, 0), 
+                                 (int(pickup['x'] + 10), int(pickup['y'])), 3)
+                pygame.draw.circle(self.screen, (255, 255, 255), 
+                                 (int(pickup['x']), int(pickup['y'])), 18, 2)
+            elif pickup['type'] == 'ammo':
+                # Ammo pickup: yellow box
+                pygame.draw.rect(self.screen, (255, 255, 0), 
+                               (int(pickup['x']) - 10, int(pickup['y']) - 5, 20, 10))
+                pygame.draw.rect(self.screen, (200, 200, 0), 
+                               (int(pickup['x']) - 8, int(pickup['y']) - 3, 16, 6))
+                for i in range(3):
+                    pygame.draw.circle(self.screen, (100, 100, 0), 
+                                     (int(pickup['x'] - 5 + i * 5), int(pickup['y'])), 2)
+                pygame.draw.circle(self.screen, (255, 255, 255), 
+                                 (int(pickup['x']), int(pickup['y'])), 18, 2)
         
         # Draw UI
         font = pygame.font.SysFont(None, 24)

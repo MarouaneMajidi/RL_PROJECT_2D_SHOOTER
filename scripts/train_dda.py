@@ -118,7 +118,7 @@ def train_dda(
     if max_episodes is not None:
         print(f"Max episodes: {max_episodes}")
     else:
-        print(f"Total timesteps: {dda_config.total_timesteps}")
+    print(f"Total timesteps: {dda_config.total_timesteps}")
     print(f"Action interval: {dda_config.action_interval} frames ({dda_config.action_interval/60:.1f} seconds)")
     print(f"Metrics will be saved to: {metrics_tracker.metrics_file}")
     print("-" * 60)

@@ -116,6 +116,7 @@ class PPOConfig:
     # Positioning Rewards/Penalties
     reward_standing_still_penalty: float = -1.5  # Increased penalty
     reward_too_close_penalty: float = -0.5
+    reward_edge_camping_penalty: float = -0.5  # NEW: Penalty for camping near arena edges
     
     # Pickup Rewards - ENHANCED WITH DIRECTIONAL REWARDS
     reward_machinegun_pickup: float = 5.0  # Increased
@@ -143,7 +144,7 @@ class PPOConfig:
     # Penalties
     reward_damage_taken: float = -5.0
     reward_death: float = -20.0
-    reward_idle_penalty: float = -0.1
+    reward_idle_penalty: float = -0.05  # Reduced to prevent reward explosion and collapse
     
     # Danger & Distance-Based Behavior
     reward_danger_decrease: float = 0.3
