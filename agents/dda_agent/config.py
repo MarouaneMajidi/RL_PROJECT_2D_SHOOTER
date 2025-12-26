@@ -21,20 +21,20 @@ class DDAConfig:
     episode_length: int = 3600  # Episode length in frames (60 seconds at 60 FPS)
     
     # Training hyperparameters
-    learning_rate: float = 3e-4
+    learning_rate: float = 5e-4  # Increased from 3e-4 to encourage faster policy updates
     gamma: float = 0.99  # Discount factor
     gae_lambda: float = 0.95  # Lambda for GAE
     clip_epsilon: float = 0.2  # Clipping parameter for PPO
     
     # Loss coefficients
-    value_loss_coef: float = 0.5
-    entropy_coef: float = 0.01
+    value_loss_coef: float = 0.25  # Reduced from 0.5 to stabilize value function and reduce value loss spikes
+    entropy_coef: float = 0.15  # Increased from 0.01 to prevent policy collapse
     max_grad_norm: float = 0.5
     
     # Training loop parameters
     n_steps: int = 2048
     batch_size: int = 64
-    n_epochs: int = 10
+    n_epochs: int = 4  # Reduced from 10 to prevent overfitting to old data
     
     # Neural network architecture
     hidden_dim: int = 128

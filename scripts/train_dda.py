@@ -118,7 +118,7 @@ def train_dda(
     if max_episodes is not None:
         print(f"Max episodes: {max_episodes}")
     else:
-    print(f"Total timesteps: {dda_config.total_timesteps}")
+        print(f"Total timesteps: {dda_config.total_timesteps}")
     print(f"Action interval: {dda_config.action_interval} frames ({dda_config.action_interval/60:.1f} seconds)")
     print(f"Metrics will be saved to: {metrics_tracker.metrics_file}")
     print("-" * 60)
@@ -220,10 +220,12 @@ def train_dda(
             
             # Log training stats
             if dda_agent.num_updates % dda_config.log_interval == 0:
+                # Display positive entropy (entropy_loss is negative entropy)
+                entropy_value = -update_stats['entropy_loss']
                 print(f"Update {dda_agent.num_updates} | "
                       f"Policy Loss: {update_stats['policy_loss']:.4f} | "
                       f"Value Loss: {update_stats['value_loss']:.4f} | "
-                      f"Entropy: {update_stats['entropy_loss']:.4f} | "
+                      f"Entropy: {entropy_value:.4f} | "
                       f"Clip Fraction: {update_stats['clip_fraction']:.4f}")
                 if 'explained_variance' in update_stats:
                     print(f"  Explained Variance: {update_stats['explained_variance']:.4f}")

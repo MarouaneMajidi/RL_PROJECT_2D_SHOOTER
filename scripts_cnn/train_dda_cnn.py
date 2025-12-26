@@ -25,6 +25,60 @@ from agents_cnn.dda_cnn.metrics_tracker import CNNDDAMetricsTracker
 from agents.ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
 from agents.dda_agent import DDAConfig, DDAEnvironment, DifficultyManager
 
+# Import CNN player agent (for CNN-based player models)
+from agents_cnn.player_cnn.agent import CNNPlayerAgent
+from agents_cnn.player_cnn.config import CNNPlayerConfig
+from agents_cnn.player_cnn.image_preprocessor import ImagePreprocessor
+
+
+class CNNPlayerAgentWrapper:
+    """
+    Wrapper for CNN player agent to work with feature-based DDA environment.
+    
+    Converts feature-based states to image states for CNN agent.
+    """
+    def __init__(self, cnn_agent, game_env):
+        """
+        Initialize wrapper.
+        
+        Args:
+            cnn_agent: CNNPlayerAgent instance
+            game_env: ZombieShooterEnv instance (for image capture)
+        """
+        self.cnn_agent = cnn_agent
+        self.game_env = game_env
+        self.preprocessor = ImagePreprocessor()
+        if hasattr(game_env, 'ARENA_X_OFFSET'):
+            self.preprocessor.ARENA_X_OFFSET = game_env.ARENA_X_OFFSET
+        if hasattr(game_env, 'ARENA_Y_OFFSET'):
+            self.preprocessor.ARENA_Y_OFFSET = game_env.ARENA_Y_OFFSET
+    
+    def select_action(self, game_state, deterministic=False):
+        """
+        Select action using CNN agent.
+        
+        Args:
+            game_state: Feature-based state (ignored, we use image instead)
+            deterministic: Whether to select deterministic action
+        
+        Returns:
+            action, log_prob, value
+        """
+        # Render to get current frame
+        if hasattr(self.game_env, 'render'):
+            self.game_env.render()
+        
+        # Capture image from game environment
+        if hasattr(self.game_env, 'screen'):
+            self.preprocessor.add_frame(self.game_env.screen)
+        
+        # Get stacked frames and convert to channels-first format
+        stacked = self.preprocessor.get_stacked_frames()  # (4, 96, 128, 3)
+        image_state = stacked.reshape(12, 96, 128)  # (12, 96, 128)
+        
+        # Use CNN agent to select action
+        return self.cnn_agent.select_action(image_state, deterministic)
+
 
 def get_base_params():
     """Get base game parameters."""
@@ -75,19 +129,47 @@ def train_cnn_dda(
     print("Creating game environment...")
     game_env = ZombieShooterEnv(ppo_config, headless=not render)
     
-    # Load trained player agent (for DDA environment)
+    # Detect and load player agent (CNN or feature-based)
     print(f"Loading player agent from {player_model_path}...")
-    player_agent = PPOAgent(ppo_config)
-    try:
-        player_agent.load(player_model_path)
-        print("Player agent loaded successfully!")
-    except FileNotFoundError:
-        print(f"Warning: Player agent not found at {player_model_path}")
-        print("Training DDA without player agent (will use random actions)")
-        player_agent = None
+    player_agent = None
+    is_cnn_player = False
+    
+    # Check if this is a CNN model (by path or try loading)
+    if 'checkpoints_cnn' in player_model_path or 'player_cnn' in player_model_path:
+        # Try loading as CNN agent
+        try:
+            player_config = CNNPlayerConfig()
+            player_agent = CNNPlayerAgent(player_config)
+            player_agent.load(player_model_path)
+            is_cnn_player = True
+            print("CNN Player agent loaded successfully!")
+        except Exception as e:
+            print(f"Warning: Failed to load as CNN agent: {e}")
+            print("Trying as feature-based agent...")
+            is_cnn_player = False
+    
+    # If not CNN or CNN load failed, try feature-based
+    if not is_cnn_player:
+        try:
+            player_agent = PPOAgent(ppo_config)
+            player_agent.load(player_model_path)
+            print("Feature-based Player agent loaded successfully!")
+        except FileNotFoundError:
+            print(f"Warning: Player agent not found at {player_model_path}")
+            print("Training DDA without player agent (will use random actions)")
+            player_agent = None
+        except Exception as e:
+            print(f"Warning: Failed to load player agent: {e}")
+            print("Training DDA without player agent (will use random actions)")
+            player_agent = None
     
     # Get base parameters
     base_params = get_base_params()
+    
+    # Wrap CNN player agent if needed
+    if is_cnn_player and player_agent is not None:
+        print("Wrapping CNN player agent for DDA environment compatibility...")
+        player_agent = CNNPlayerAgentWrapper(player_agent, game_env)
     
     # Create feature-based DDA environment (needed for game mechanics)
     print("Creating feature-based DDA environment (for game mechanics)...")
@@ -229,10 +311,12 @@ def train_cnn_dda(
             
             # Log training stats
             if dda_agent.num_updates % dda_config.log_interval == 0:
+                # Display positive entropy (entropy_loss is negative entropy)
+                entropy_value = -update_stats['entropy_loss']
                 print(f"CNN Update {dda_agent.num_updates} | "
                       f"Policy Loss: {update_stats['policy_loss']:.4f} | "
                       f"Value Loss: {update_stats['value_loss']:.4f} | "
-                      f"Entropy: {update_stats['entropy_loss']:.4f} | "
+                      f"Entropy: {entropy_value:.4f} | "
                       f"Clip Fraction: {update_stats['clip_fraction']:.4f}")
                 if 'explained_variance' in update_stats:
                     print(f"  Explained Variance: {update_stats['explained_variance']:.4f}")
@@ -266,8 +350,8 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Train CNN-based DDA Agent")
-    parser.add_argument('--player-model', type=str, default=os.path.join(project_root, 'checkpoints/player_ppo/best_model.pth'),
-                       help='Path to trained player agent model')
+    parser.add_argument('--player-model', type=str, default=os.path.join(project_root, 'checkpoints_cnn/player_cnn/best_model.pth'),
+                       help='Path to trained player agent model (CNN or feature-based)')
     parser.add_argument('--checkpoint', type=str, default=None,
                        help='Path to CNN DDA checkpoint to resume from')
     parser.add_argument('--render', action='store_true',
