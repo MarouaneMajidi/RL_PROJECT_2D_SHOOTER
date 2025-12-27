@@ -449,21 +449,4 @@ This is an educational project. Feel free to use and modify it for learning purp
 
 ---
 
-## Acknowledgments
-
-- PPO Algorithm based on the paper by Schulman et al. (2017): "Proximal Policy Optimization Algorithms"
-- Built using Pygame for game development
-- PyTorch for deep learning
-- Inspired by OpenAI Spinning Up educational resources
-
----
-
-## Contact & Support
-
-If you have questions, find issues, or want to contribute, please open an issue on the repository.
-
----
-
-**Built with PyTorch, Pygame, and lots of reinforcement learning**
-
 Last Updated: December 2024
