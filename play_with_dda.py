@@ -235,6 +235,8 @@ class Pickup:
             pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
         elif self.pickup_type == "machinegun":
             pygame.draw.rect(screen, (100, 100, 100), (self.x - 12, self.y - 4, 24, 8))
+            pygame.draw.rect(screen, (150, 150, 150), (self.x - 8, self.y - 2, 16, 4))
+            pygame.draw.circle(screen, YELLOW, (int(self.x + 10), int(self.y)), 3)
             pygame.draw.circle(screen, WHITE, (int(self.x), int(self.y)), 18, 2)
 
 

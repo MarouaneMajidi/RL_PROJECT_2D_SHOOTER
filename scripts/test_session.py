@@ -767,7 +767,7 @@ def main():
     wait_for_key(screen, "Match 1 - Press ENTER to start")
     
     # Run Match 1
-    dda_model_path = os.path.join(project_root, "checkpoints/dda/best_dda_model.pth") if match1_condition == "with_dda" else None
+    dda_model_path = os.path.join(project_root, "checkpoints/dda/backup_best_dda_model.pth") if match1_condition == "with_dda" else None
     consolidated_metrics1, consolidated_frames1 = run_match(player_id, 1, match1_condition, dda_model_path)
     print(f"\nMatch 1 completed! Data saved to consolidated files.")
     
@@ -792,7 +792,7 @@ def main():
     wait_for_key(screen, "Match 2 - Press ENTER to start")
     
     # Run Match 2
-    dda_model_path = os.path.join(project_root, "checkpoints/dda/best_dda_model.pth") if match2_condition == "with_dda" else None
+    dda_model_path = os.path.join(project_root, "checkpoints/dda/backup_best_dda_model.pth") if match2_condition == "with_dda" else None
     consolidated_metrics2, consolidated_frames2 = run_match(player_id, 2, match2_condition, dda_model_path)
     print(f"\nMatch 2 completed! Data saved to consolidated files.")
     
