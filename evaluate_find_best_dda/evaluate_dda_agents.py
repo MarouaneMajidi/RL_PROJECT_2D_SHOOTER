@@ -13,7 +13,12 @@ from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
 # Add project root to path
-project_root = os.path.dirname(os.path.abspath(__file__))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get actual project root (parent directory if script is in evaluate_find_best_dda)
+if os.path.basename(script_dir) == 'evaluate_find_best_dda':
+    project_root = os.path.dirname(script_dir)
+else:
+    project_root = script_dir
 sys.path.insert(0, project_root)
 
 from agents.ppo_agent import PPOAgent, PPOConfig, ZombieShooterEnv
@@ -340,11 +345,11 @@ def run_game_with_dda(dda_agent, dda_env, is_cnn: bool, game_id: int) -> Tuple[D
     
     # Danger zone metrics (<30% health)
     time_in_danger = np.sum(health_array < 30)
-    time_in_danger_percent = (time_in_danger / len(health_array)) * 100.0
+    time_in_danger_zone_percent = (time_in_danger / len(health_array)) * 100.0
     
     # Safety zone metrics (>70% health)
     time_in_safety = np.sum(health_array > 70)
-    time_in_safety_percent = (time_in_safety / len(health_array)) * 100.0
+    time_in_safety_zone_percent = (time_in_safety / len(health_array)) * 100.0
     
     # Near-death metrics (<20% health)
     # Count: number of times health dropped below 20%
@@ -389,7 +394,7 @@ def run_game_with_dda(dda_agent, dda_env, is_cnn: bool, game_id: int) -> Tuple[D
         'min_health': min_health,
         'time_in_flow_zone_percent': time_in_flow_zone_percent,
         'time_in_danger_zone_percent': time_in_danger_zone_percent,
-        'time_in_safety_zone_percent': time_in_safety_percent,
+        'time_in_safety_zone_percent': time_in_safety_zone_percent,
         'near_death_count': int(near_death_count),
         'near_death_time_percent': near_death_time_percent,
         'action_do_nothing_count': action_do_nothing,
@@ -598,7 +603,8 @@ def main():
     # Configuration
     player_model_path = os.path.join(project_root, "checkpoints", "player_ppo", "best_model_marouane.pth")
     num_games = 100
-    output_dir = os.path.join(project_root, "data", "evaluation")
+    # Save results to local data/evaluation directory (relative to script location)
+    output_dir = os.path.join(script_dir, "data", "evaluation")
     
     # Load player agent
     print(f"\nLoading player agent from: {player_model_path}")
