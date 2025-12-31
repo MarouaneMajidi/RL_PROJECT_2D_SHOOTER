@@ -1,0 +1,35 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+
+# ===== Virtual Environment =====
+.venv/
+venv/
+env/
+ENV/
+
+# ===== Python Version Management =====
+.python-version
+
+# ===== IDEs and Editors =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# ===== OS Files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Personal/Private Files =====
+.env
+.env.local
+personal_notes.md
+TODO_personal.md
