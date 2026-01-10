@@ -72,7 +72,7 @@ The project includes both traditional state-based RL agents and CNN-based vision
 
 - Manual play mode so you can try it yourself
 
-(here game play)
+![Image](https://github.com/user-attachments/assets/b6c58d0d-64c2-4fe9-8c06-b4bcf7c9f9ff)
 
 ### Evaluation & Testing
 
