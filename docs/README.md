@@ -15,16 +15,14 @@ A comprehensive reinforcement learning project featuring a Proximal Policy Optim
 - [Core Components](#core-components)
 - [Training & Evaluation](#training--evaluation)
 - [Training and Comparison Pipeline](#training-and-comparison-pipeline)
-- [What We've Accomplished](#what-weve-accomplished)
 - [What's Next](#whats-next)
-- [Documentation](#documentation)
 - [Contributing](#contributing)
 
 ---
 
 ## Overview
 
-This project tackles an interesting challenge in game AI: can we build an AI that not only learns to play a game, but also learns to adjust the game's difficulty to keep players engaged?
+This project tackles an interesting challenge in game AI: can we build an AI that learns to adjust the game's difficulty to keep players engaged?
 
 We've implemented two main components:
 
@@ -56,8 +54,6 @@ The project includes both traditional state-based RL agents and CNN-based vision
 
 - Adjusts things like zombie speed, spawn rate, and health in real-time
 
-- Tries to keep players in the "flow zone" where challenge matches skill
-
 - Works with both state observations and visual input
 
 - Comprehensive evaluation framework to measure effectiveness
@@ -66,7 +62,7 @@ The project includes both traditional state-based RL agents and CNN-based vision
 
 - Classic 2D top-down zombie shooter built with Pygame
 
-- Multiple weapons (Pistol, Machine Gun, Knife) with different characteristics
+- Multiple weapons (Pistol, Machine Gun) with different characteristics
 
 - Health and ammo pickups scattered around the map
 
@@ -75,6 +71,8 @@ The project includes both traditional state-based RL agents and CNN-based vision
 - DDA mode with adaptive difficulty
 
 - Manual play mode so you can try it yourself
+
+(here game play)
 
 ### Evaluation & Testing
 
@@ -115,7 +113,7 @@ Learns to:                  Learns to:
 
 - Survive longer           - Keep challenge balanced
 
-- Switch weapons           - Maintain the "flow zone"
+- Switch weapons           
 
 Both agents can use either:
 
@@ -311,7 +309,7 @@ RL_PROJECT/
 
 **Vision-based version:**
 
-- Sees the game as an 84x84 RGB image (like looking at a screen)
+- Sees the game as 4 consecutive 128×96 RGB frames (stacked over time), similar to observing motion on a screen.
 
 - Uses a convolutional neural network to understand what's happening
 
@@ -373,7 +371,7 @@ It gets rewarded for keeping you in the optimal difficulty range (not too easy, 
 
 - Two zombie types: Normal (weaker) and Strong (tougher)
 
-- Three weapons: Pistol (balanced), Machine Gun (rapid fire), Knife (melee, unlimited ammo)
+- Three weapons: Pistol (balanced) and Machine Gun (rapid fire)
 
 - Pickups: Health packs and Machine Gun ammo
 
@@ -423,7 +421,7 @@ jupyter notebook analyze_dda_evaluation.ipynb
 
 - Number of zombies killed
 
-- Percentage of time in the "flow zone" (optimal difficulty)
+- Percentage of time in the "target zone"
 
 - What actions the DDA agent takes
 
@@ -477,7 +475,7 @@ Train Multiple Player Agents
     │
     ├── best_model_marouane
     ├── best_model_sohaib
-    └── (other variants)
+    └── (other variants Vision based)
     │
     ▼
 Test Each Agent (100 games)
@@ -563,8 +561,6 @@ We need a DDA agent that maintains balanced difficulty - challenging enough to b
 3. **Flow Zone Time**: Percentage of time in optimal difficulty range
    - Higher is better, but not at the expense of making the game too easy
 
-4. **Composite Score**: Combines multiple metrics to balance different aspects
-
 **DDA Agent Selection Pipeline:**
 
 ```
@@ -622,16 +618,9 @@ Using a Jupyter notebook (`analyze_dda_evaluation.ipynb`), we performed detailed
    - Lower is generally better (DDA is helping)
    - But must be balanced with maintaining challenge
 
-4. **Composite Scoring**: Created a composite score combining:
-   - Survival time (weighted)
-   - Flow zone percentage
-   - Danger zone avoidance
-   - Health stability
-   - Critical health time minimization
+4. **Ranking System**: Ranked agents by multiple criteria to find balanced performance
 
-5. **Ranking System**: Ranked agents by multiple criteria to find balanced performance
-
-6. **Visualization**: Generated comparison plots:
+5. **Visualization**: Generated comparison plots:
    - Survival time distributions
    - Flow zone comparisons
    - Action distribution charts
@@ -647,8 +636,6 @@ Based on the comprehensive analysis considering action distribution, critical he
 **Selection Rationale:**
 - Balanced action distribution (not always easier)
 - Low time in critical health (<20%) while maintaining challenge
-- Good flow zone percentage
-- High composite score
 - Best overall balance between challenge and player assistance
 
 **Performance Results:**
@@ -673,68 +660,6 @@ PHASE 2: DDA Agent Selection
 ```
 
 This two-phase approach ensures we first have a strong player agent, then use it to train and evaluate DDA agents with careful consideration of multiple factors beyond simple survival time.
-
----
-
-## What We've Accomplished
-
-### Player Agent Performance
-
-Based on evaluation of 100 games with the best player agent (best_model_marouane):
-
-- **Survival Time**: Mean of 3,300 steps (55 seconds at 60 FPS), with best performance reaching 5,898 steps (98 seconds)
-
-- **Zombies Killed**: Mean of 68 kills per game, with maximum of 156 kills achieved
-
-- **Wave Progression**: Successfully reaches wave 8-11 on average, with maximum wave of 16 achieved
-
-- **Consistency**: Shows stable performance across multiple games with strategic behavior including movement, aiming, and weapon switching
-
-### DDA Agent Performance
-
-We evaluated 4 different DDA agents across 400 total games (100 games per agent):
-
-**Best Performing Agent: CNN_best_model**
-
-- **Survival Time**: 455.3 seconds average (vs 198.3 seconds average for all agents)
-- **Total Kills**: 154.42 average (vs 67.92 average for all agents)
-- **Flow Zone Time**: 10.92% of gameplay (optimal difficulty range)
-- **Danger Zone Time**: 2.08% (vs 6.1% average) - 65.9% better at avoiding extreme difficulty
-- **Health Stability**: 12.36 standard deviation (most stable health management)
-- **Composite Score**: 1.67 (highest among all agents)
-
-**Comparison Results:**
-- CNN_best_model achieved 129.6% better survival time than the average
-- Maintained players in flow zone 6.8% better than average
-- Reduced danger zone time by 65.9% compared to average
-- Significantly outperformed all state-based DDA agents
-
-**Other Agents Evaluated:**
-- RL_best_dda_model_1: 158.75s survival, 56.17 kills, 0.63 composite score
-- RL_backup_best_dda_model: 90.20s survival, 30.62 kills, 0.36 composite score
-- RL_best_dda_model_2: 89.00s survival, 30.45 kills, 0.36 composite score
-
-### Evaluation Framework
-
-- Built comprehensive metrics collection system tracking 15+ metrics per game
-
-- Created automated evaluation pipeline running 100 games per agent
-
-- Developed statistical analysis tools with composite scoring
-
-- Generated visualization suite for comparing agent performance
-
-- Successfully identified best-performing DDA configuration through systematic comparison
-
-### Code Quality
-
-- Clean, modular architecture that's easy to understand and extend
-
-- Thorough documentation throughout
-
-- Reproducible experiments with clear instructions
-
-- Good separation between different components
 
 ---
 
@@ -789,24 +714,6 @@ The next major step is conducting real-world user testing to see if our DDA syst
 - Validation that DDA actually works as intended
 
 - Ideas for improving the system further
-
----
-
-## Documentation
-
-We've written detailed documentation covering different aspects of the project:
-
-- **DDA_EXPLANATION.md** - Deep dive into how the DDA system works
-
-- **TRAINING_GUIDE.md** - Tips and best practices for training agents
-
-- **DDA_DESIGN.md** - Design decisions and architecture explanation
-
-- **DDA_EVALUATION_METRICS.md** - Understanding the evaluation metrics
-
-- **EVALUATION_README.md** - Guide for running user testing
-
-All documentation is in the `docs/` directory.
 
 ---
 
