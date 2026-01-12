@@ -7,7 +7,7 @@ A comprehensive reinforcement learning project featuring a Proximal Policy Optim
 ## Table of Contents
 
 - [Overview](#overview)
-- [Demos](#demo)
+- [Demos](#demos)
 - [What Makes This Project Interesting](#what-makes-this-project-interesting)
 - [Project Architecture](#project-architecture)
 - [Installation](#installation)
