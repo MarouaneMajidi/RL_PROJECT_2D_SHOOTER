@@ -7,6 +7,7 @@ A comprehensive reinforcement learning project featuring a Proximal Policy Optim
 ## Table of Contents
 
 - [Overview](#overview)
+- [Demos](#demo)
 - [What Makes This Project Interesting](#what-makes-this-project-interesting)
 - [Project Architecture](#project-architecture)
 - [Installation](#installation)
@@ -33,6 +34,25 @@ We've implemented two main components:
 The project includes both traditional state-based RL agents and CNN-based vision agents, along with comprehensive tools for evaluating performance and comparing different approaches.
 
 ---
+
+## Demos
+
+### Feature-Based PPO Player Agent
+The agent observes a handcrafted state vector and learns movement, aiming, and shooting strategies using PPO.
+
+
+---
+
+### Vision-Based PPO Player Agent (CNN)
+The agent learns directly from stacked RGB frames, perceiving the game world visually like a human player.
+
+---
+
+### Dynamic Difficulty Adjustment (DDA) Agent
+A reinforcement learning–based game director that adjusts game difficulty every 5 seconds based on player performance to maintain engagement.
+
+
+
 
 ## What Makes This Project Interesting
 
