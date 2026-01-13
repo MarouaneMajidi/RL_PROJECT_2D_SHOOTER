@@ -46,8 +46,7 @@ The agent observes a handcrafted state vector and learns movement, aiming, and s
 ### Vision-Based PPO Player Agent (CNN)
 The agent learns directly from stacked RGB frames, perceiving the game world visually like a human player.
 
-![Vision-Based PPO Player Agent](../demos/vision-based-player.gif)
-
+![Image](https://github.com/user-attachments/assets/6efcd017-a832-43a5-b8b9-50e9d064d3b7)
 ---
 
 ### Dynamic Difficulty Adjustment (DDA) Agent
