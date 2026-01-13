@@ -40,8 +40,7 @@ The project includes both traditional state-based RL agents and CNN-based vision
 ### Feature-Based PPO Player Agent
 The agent observes a handcrafted state vector and learns movement, aiming, and shooting strategies using PPO.
 
-![Feature-Based PPO Player Agent](../demos/feature_based_agent_playing.gif)
-
+![Image](https://github.com/user-attachments/assets/32742df6-ecd6-4c19-9cda-280065679df2)
 ---
 
 ### Vision-Based PPO Player Agent (CNN)
