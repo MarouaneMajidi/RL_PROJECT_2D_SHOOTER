@@ -54,7 +54,7 @@ The agent learns directly from stacked RGB frames, perceiving the game world vis
 ### Dynamic Difficulty Adjustment (DDA) Agent
 A reinforcement learning–based game director that adjusts game difficulty every 5 seconds based on player performance to maintain engagement.
 
-![Image](https://github.com/user-attachments/assets/59801e06-e7f9-4573-8403-c9aecf450d09)
+![Image](https://github.com/user-attachments/assets/04343e48-4e29-40e0-9a0a-d9f42ab1fb3b)
 
 ---
 
